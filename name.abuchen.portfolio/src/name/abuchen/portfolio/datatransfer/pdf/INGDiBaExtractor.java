@@ -77,10 +77,18 @@ public class INGDiBaExtractor extends AbstractPDFExtractor
                             return entry;
                         })
 
-                        .section("wkn", "isin", "name")
+                        .section("wkn", "isin", "name", "nameContinued")
                         //
                         .match("^ISIN \\(WKN\\) (?<isin>[^ ]*) \\((?<wkn>.*)\\)$")
-                        .match("Wertpapierbezeichnung (?<name>.*)").assign((t, v) -> {
+                        .match("Wertpapierbezeichnung (?<name>.*)")
+                        .match("(?<nameContinued>.*?)")
+                        .assign((t, v) -> {
+                            String nameRowTwo = v.get("nameContinued"); //$NON-NLS-1$
+                            if (nameRowTwo != null && (nameRowTwo.contains("Fälligkeit") || nameRowTwo.contains("Nominale")))
+                            {
+                                v.put("nameContinued", "");
+                            }
+                            
                             t.setSecurity(getOrCreateSecurity(v));
                         })
 
