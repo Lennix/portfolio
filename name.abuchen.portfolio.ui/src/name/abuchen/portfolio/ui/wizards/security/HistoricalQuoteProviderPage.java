@@ -27,12 +27,12 @@ import name.abuchen.portfolio.online.Factory;
 import name.abuchen.portfolio.online.QuoteFeed;
 import name.abuchen.portfolio.online.impl.AlphavantageQuoteFeed;
 import name.abuchen.portfolio.online.impl.FinnhubQuoteFeed;
+import name.abuchen.portfolio.online.impl.GenericJSONQuoteFeed;
 import name.abuchen.portfolio.online.impl.QuandlQuoteFeed;
 import name.abuchen.portfolio.ui.Messages;
 import name.abuchen.portfolio.ui.PortfolioPlugin;
 import name.abuchen.portfolio.ui.util.BindingHelper;
 import name.abuchen.portfolio.ui.util.QuotesTableViewer;
-import name.abuchen.portfolio.util.Pair;
 
 public class HistoricalQuoteProviderPage extends AbstractQuoteProviderPage
 {
@@ -131,28 +131,33 @@ public class HistoricalQuoteProviderPage extends AbstractQuoteProviderPage
         tableSampleData.setInput(null);
         tableSampleData.refresh();
     }
-    
+
     private Object buildCacheKey(Exchange exchange)
     {
         if (exchange != null)
-            return exchange;
+            return getFeed() + exchange.getId();
         else if (AlphavantageQuoteFeed.ID.equals(getFeed()))
-            return new Pair<String, String>(AlphavantageQuoteFeed.ID, getModel().getTickerSymbol());
+            return AlphavantageQuoteFeed.ID + getModel().getTickerSymbol();
         else if (FinnhubQuoteFeed.ID.equals(getFeed()))
-            return new Pair<String, String>(FinnhubQuoteFeed.ID, getModel().getTickerSymbol());
+            return FinnhubQuoteFeed.ID + getModel().getTickerSymbol();
         else if (QuandlQuoteFeed.ID.equals(getFeed()))
-            return new Pair<String, String>(QuandlQuoteFeed.ID, String
-                            .valueOf(getModel().getFeedProperty(QuandlQuoteFeed.QUANDL_CODE_PROPERTY_NAME))
-                            + String.valueOf(getModel().getFeedProperty(QuandlQuoteFeed.QUANDL_CODE_PROPERTY_NAME)));
+            return QuandlQuoteFeed.ID
+                            + String.valueOf(getModel().getFeedProperty(QuandlQuoteFeed.QUANDL_CODE_PROPERTY_NAME))
+                            + String.valueOf(getModel()
+                                            .getFeedProperty(QuandlQuoteFeed.QUANDL_CLOSE_COLUMN_NAME_PROPERTY_NAME));
+        else if (GenericJSONQuoteFeed.ID.equals(getFeed()))
+            return GenericJSONQuoteFeed.ID + getModel().getFeedURL()
+                            + String.valueOf(getModel().getFeedProperty(GenericJSONQuoteFeed.DATE_PROPERTY_NAME))
+                            + String.valueOf(getModel().getFeedProperty(GenericJSONQuoteFeed.CLOSE_PROPERTY_NAME));
         else
-            return getModel().getFeedURL();
+            return getFeed() + getModel().getFeedURL();
     }
 
     @Override
     protected void showSampleQuotes(QuoteFeed feed, Exchange exchange)
     {
         Object cacheKey = buildCacheKey(exchange);
-        
+
         List<LatestSecurityPrice> quotes = cacheQuotes.get(cacheKey);
 
         if (quotes != null)

@@ -269,6 +269,7 @@ public class Messages extends NLS
     public static String ColumnTaxes_Description;
     public static String ColumnTaxonomy;
     public static String ColumnTermCurrency;
+    public static String ColumnThereofForeignCurrencyGains;
     public static String ColumnTicker;
     public static String ColumnTotal;
     public static String ColumnTransactionType;
@@ -621,6 +622,9 @@ public class Messages extends NLS
     public static String LabelHeatmapEarnings;
     public static String LabelHeatmapOrnament;
     public static String LabelHistoricalReturnsAndVolatiltity;
+    public static String LabelJSONPathHint;
+    public static String LabelJSONPathToClose;
+    public static String LabelJSONPathToDate;
     public static String LabelKeyIndicators;
     public static String LabelMaxDrawdown;
     public static String LabelMaxDrawdownDuration;
@@ -975,6 +979,7 @@ public class Messages extends NLS
     public static String HeatmapOrnamentGeometricMean;
     public static String HeatmapOrnamentStandardDeviation;
     public static String HeatmapOrnamentSum;
+    public static String HelpURL;
     public static String HoldingsWarningAssetsWithNegativeValuation;
     public static String HoldingsWarningAssetsWithNegativeValuationDetails;
     public static String YearlyPerformanceHeatmapToolTip;
