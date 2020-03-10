@@ -38,6 +38,7 @@ import name.abuchen.portfolio.money.Values;
 import name.abuchen.portfolio.snapshot.PortfolioSnapshot;
 import name.abuchen.portfolio.ui.Images;
 import name.abuchen.portfolio.ui.Messages;
+import name.abuchen.portfolio.ui.handlers.ImportPDFHandler;
 import name.abuchen.portfolio.ui.util.ConfirmAction;
 import name.abuchen.portfolio.ui.util.DropDown;
 import name.abuchen.portfolio.ui.util.SimpleAction;
@@ -307,6 +308,14 @@ public class PortfolioListView extends AbstractListView implements ModificationL
             return;
 
         new SecurityContextMenu(this).menuAboutToShow(manager, null, portfolio);
+
+        if (!portfolio.isRetired())
+        {
+            manager.add(new Separator());
+            manager.add(new SimpleAction(Messages.AccountMenuImportPDF,
+                            a -> ImportPDFHandler.runImport(getPart(), Display.getDefault().getActiveShell(),
+                                            getClient(), portfolio.getReferenceAccount(), portfolio)));
+        }
 
         manager.add(new Separator());
 
