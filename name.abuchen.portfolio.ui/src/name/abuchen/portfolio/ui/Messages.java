@@ -32,6 +32,9 @@ public class Messages extends NLS
     public static String BookmarksListView_LabelAttributeReplacements;
     public static String BookmarksListView_LabelDefaultReplacements;
     public static String BookmarksListView_LabelReplaceFirstAvailable;
+    public static String MenuDashboardColumnWidth;
+    public static String MenuDashboardColumnWidthDecrease;
+    public static String MenuDashboardColumnWidthIncrease;
     public static String MenuDuplicateDashboardColumn;
     public static String MenuMoveDown;
     public static String MenuMoveUp;
@@ -602,6 +605,7 @@ public class Messages extends NLS
     public static String LabelReportingDialogYear;
     public static String LabelReportingDialogYears;
     public static String LabelReportingPeriod;
+    public static String LabelReportingPeriodEditTooltip;
     public static String LabelReportInterval;
     public static String LabelRiskIndicators;
     public static String LabelRiskMetric;
@@ -780,7 +784,6 @@ public class Messages extends NLS
     public static String MsgAccountFromMissing;
     public static String MsgAccountMustBeDifferent;
     public static String MsgAccountToMissing;
-    public static String MsgCannotRestartBecauseOfOpenDialog;
     public static String MsgConfirmInstall;
     public static String MsgCreateTransactionsAutomaticallyUponOpening;
     public static String MsgDateIsInTheFuture;
