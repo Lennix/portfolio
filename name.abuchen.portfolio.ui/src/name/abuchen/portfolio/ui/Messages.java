@@ -251,6 +251,9 @@ public class Messages extends NLS
     public static String ColumnQuoteChange_Option;
     public static String ColumnQuoteFeedHistoric;
     public static String ColumnQuoteFeedLatest;
+    public static String ColumnRebalancingIndicatorAbsoluteThreshold;
+    public static String ColumnRebalancingIndicatorBarLength;
+    public static String ColumnRebalancingIndicatorRelativeThreshold;
     public static String ColumnReferenceAccount;
     public static String ColumnRetired;
     public static String ColumnSecurity;
@@ -370,6 +373,7 @@ public class Messages extends NLS
     public static String ExportWizardSelectDirectory;
     public static String ExportWizardTitle;
     public static String ExportWizardUnsupportedExport;
+    public static String ExportWizardVINISApp;
     public static String GroupLabelAttributes;
     public static String GroupLabelDataQuality;
     public static String GroupLabelDividends;
@@ -417,6 +421,7 @@ public class Messages extends NLS
     public static String InvestmentPlanTxForMultiplePlansCreated;
     public static String InvestmentPlanTypeBuyDelivery;
     public static String InvestmentPlanTypeDeposit;
+    public static String JobLabelAutoSave;
     public static String JobLabelSyncSecuritiesOnline;
     public static String JobLabelUpdateCPI;
     public static String JobLabelUpdateQuotes;
@@ -473,6 +478,8 @@ public class Messages extends NLS
     public static String LabelChartDetailIndicatorBollingerBandsLower;
     public static String LabelChartDetailIndicatorBollingerBandsUpper;
     public static String LabelChartDetailMovingAverage;
+    public static String LabelChartDetailMovingAverageSMA;
+    public static String LabelChartDetailMovingAverageEMA;
     public static String LabelChartDetailMovingAverage_50days;
     public static String LabelChartDetailMovingAverage_5days;
     public static String LabelChartDetailMovingAverage_20days;
@@ -481,21 +488,13 @@ public class Messages extends NLS
     public static String LabelChartDetailMovingAverage_90days;
     public static String LabelChartDetailMovingAverage_100days;
     public static String LabelChartDetailMovingAverage_200days;
-    public static String LabelChartDetailExponentialMovingAverage;
-    public static String LabelChartDetailExponentialMovingAverage_50days;
-    public static String LabelChartDetailExponentialMovingAverage_5days;
-    public static String LabelChartDetailExponentialMovingAverage_20days;
-    public static String LabelChartDetailExponentialMovingAverage_30days;
-    public static String LabelChartDetailExponentialMovingAverage_38days;
-    public static String LabelChartDetailExponentialMovingAverage_90days;
-    public static String LabelChartDetailExponentialMovingAverage_100days;
-    public static String LabelChartDetailExponentialMovingAverage_200days;
     public static String LabelChartDetailSettings;
     public static String LabelChartDetailSettingsShowMarkerLines;
     public static String LabelChartDetailSettingsShowDataLabel;
     public static String LabelChartDetailSettingsShowMissingTradingDays;
     public static String LabelChartShowLabels;
     public static String LabelChartType;
+    public static String LabelCleanHTML;
     public static String LabelClientClearCustomItems;
     public static String LabelClientFilterDialogMessage;
     public static String LabelClientFilterDialogTitle;
@@ -542,6 +541,7 @@ public class Messages extends NLS
     public static String LabelExchangeRate;
     public static String LabelExchangeRates;
     public static String LabelExport;
+    public static String LabelFormatJSON;
     public static String LabelFullClassification;
     public static String LabelIncludeSecuritiesInPieChart;
     public static String LabelIncludeUnassignedCategoryInCharts;
@@ -561,6 +561,8 @@ public class Messages extends NLS
     public static String LabelLayoutRelevant;
     public static String LabelLevelNameNumber;
     public static String LabelLevelNumber;
+    public static String LabelLinkedToPortfolioReport;
+    public static String LabelLinkToPortfolioReportNet;
     public static String LabelNamePlusCopy;
     public static String LabelNet;
     public static String LabelNewClassification;
@@ -594,6 +596,7 @@ public class Messages extends NLS
     public static String LabelQuoteFeed;
     public static String LabelQuoteFeedProvider;
     public static String LabelRefresh;
+    public static String LabelRemoveDividends;
     public static String LabelReportingAddPeriod;
     public static String LabelReportingDialogDays;
     public static String LabelReportingDialogFrom;
@@ -626,6 +629,7 @@ public class Messages extends NLS
     public static String LabelSemiVolatility;
     public static String LabelSettings;
     public static String LabelShowOnlyOneYear;
+    public static String LabelShowRawResponse;
     public static String LabelDividendPerShare;
     public static String LabelDividends;
     public static String LabelGreenWhiteRed;
@@ -715,11 +719,13 @@ public class Messages extends NLS
     public static String MenuConfigureChart;
     public static String MenuConfigureCurrentDashboard;
     public static String MenuConfigureDashboards;
+    public static String MenuConfigureRebalancingIndicator;
     public static String MenuConfigureView;
     public static String MenuConfirmDeleteAllTransactions;
     public static String MenuConvertToBuy;
     public static String MenuConvertToBuySell;
     public static String MenuConvertToDelivery;
+    public static String MenuConvertToDepositRemoval;
     public static String MenuConvertToInboundDelivery;
     public static String MenuConvertToOutboundDelivery;
     public static String MenuConvertToSell;
@@ -798,6 +804,7 @@ public class Messages extends NLS
     public static String MsgErrorExchangeMissing;
     public static String MsgErrorMinimumHeightRequired;
     public static String MsgErrorMissingQuandlCode;
+    public static String MsgErrorNoInvestmentVehicleFoundAtURL;
     public static String MsgErrorNotAValidDate;
     public static String MsgErrorOpeningFile;
     public static String MsgErrorSavingIniFile;
@@ -877,6 +884,7 @@ public class Messages extends NLS
     public static String PrefAlphaVantageCallFrequencyLimit;
     public static String PrefCheckOnStartup;
     public static String PrefCreateBackupBeforeSaving;
+    public static String PrefAutoSaveFrequency;
     public static String PrefDescriptionAlphaVantage;
     public static String PrefDescriptionFinnhub;
     public static String PrefDescriptionProxy;
@@ -919,6 +927,7 @@ public class Messages extends NLS
     public static String SecurityMenuConfigureOnlineUpdate;
     public static String SecurityMenuCreateManually;
     public static String SecurityMenuCreateQuotesFromTransactions;
+    public static String SecurityMenuDebugGetHistoricalQuotes;
     public static String SecurityMenuDeleteAllPrices;
     public static String SecurityMenuDeletePrice;
     public static String SecurityMenuDeleteSecurity;
@@ -981,6 +990,7 @@ public class Messages extends NLS
     public static String TooltipMaxDrawdownDurationFromXtoY;
     public static String TooltipMaxDurationLowToHigh;
     public static String TooltipQuoteAtDate;
+    public static String TooltipRebalancingIndicator;
     public static String TooltipSemiVolatility;
     public static String TooltipVolatility;
     public static String WatchlistDelete;

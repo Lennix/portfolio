@@ -332,6 +332,19 @@ public final class Security implements Attributable, InvestmentVehicle
      */
     public boolean addPrice(SecurityPrice price)
     {
+        return addPrice(price, true);
+    }
+
+    /**
+     * Adds security price to historical quotes.
+     * 
+     * @param overwriteExisting
+     *            is used to decide on whether to keep or overwrite existing
+     *            prices
+     * @return true if the historical quote was updated.
+     */
+    public boolean addPrice(SecurityPrice price, boolean overwriteExisting)
+    {
         Objects.requireNonNull(price);
 
         int index = Collections.binarySearch(prices, price);
@@ -345,7 +358,9 @@ public final class Security implements Attributable, InvestmentVehicle
         {
             SecurityPrice replaced = prices.get(index);
 
-            if (!replaced.equals(price))
+            // different prices are replaced only, if the source is manual, csv
+            // or html import, the value is 0.0
+            if (!replaced.equals(price) && (overwriteExisting || replaced.getValue() == 0.0))
             {
                 // only replace if necessary -> UI might keep reference!
                 prices.set(index, price);
@@ -356,6 +371,36 @@ public final class Security implements Attributable, InvestmentVehicle
                 return false;
             }
         }
+    }
+
+    /**
+     * Adds all prices to the list of prices unless a security price for that
+     * date already exists. However, the last historical date is overwritten as
+     * some quote provider include the latest security price in the list of
+     * historical prices.
+     */
+    public boolean addAllPrices(List<SecurityPrice> prices)
+    {
+        if (prices.isEmpty())
+            return false;
+
+        LocalDate now = LocalDate.now();
+
+        LocalDate last = null;
+        if (!prices.isEmpty())
+            last = prices.get(prices.size() - 1).getDate();
+
+        boolean isUpdated = false;
+        for (SecurityPrice p : prices)
+        {
+            if (!p.getDate().isAfter(now))
+            {
+                boolean doOverwrite = p.getDate().equals(last);
+                boolean isAdded = addPrice(p, doOverwrite);
+                isUpdated = isUpdated || isAdded;
+            }
+        }
+        return isUpdated;
     }
 
     public void removePrice(SecurityPrice price)
@@ -472,7 +517,7 @@ public final class Security implements Attributable, InvestmentVehicle
     public boolean setLatest(LatestSecurityPrice latest)
     {
         // only replace if necessary -> UI might keep reference!
-        if ((this.latest != null && !this.latest.equals(latest)) || (this.latest == null && latest != null))
+        if (!Objects.equals(latest, this.latest))
         {
             this.latest = latest;
             return true;

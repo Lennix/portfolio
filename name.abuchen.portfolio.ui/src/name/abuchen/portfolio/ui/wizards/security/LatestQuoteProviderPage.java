@@ -5,9 +5,7 @@ import static name.abuchen.portfolio.ui.util.SWTHelper.placeBelow;
 import static name.abuchen.portfolio.ui.util.SWTHelper.widestWidget;
 
 import java.text.MessageFormat;
-import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.databinding.beans.BeanProperties;
@@ -33,6 +31,7 @@ import name.abuchen.portfolio.model.Security;
 import name.abuchen.portfolio.money.Values;
 import name.abuchen.portfolio.online.Factory;
 import name.abuchen.portfolio.online.QuoteFeed;
+import name.abuchen.portfolio.online.QuoteFeedData;
 import name.abuchen.portfolio.online.impl.PortfolioReportQuoteFeed;
 import name.abuchen.portfolio.ui.Messages;
 import name.abuchen.portfolio.ui.PortfolioPlugin;
@@ -55,33 +54,9 @@ public class LatestQuoteProviderPage extends AbstractQuoteProviderPage
         }
 
         @Override
-        public boolean updateLatestQuotes(Security security, List<Exception> errors)
+        public QuoteFeedData getHistoricalQuotes(Security security, boolean collectRawResponse)
         {
-            return false;
-        }
-
-        @Override
-        public boolean updateHistoricalQuotes(Security security, List<Exception> errors)
-        {
-            return false;
-        }
-
-        @Override
-        public List<LatestSecurityPrice> getHistoricalQuotes(Security security, LocalDate start, List<Exception> errors)
-        {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public List<LatestSecurityPrice> getHistoricalQuotes(String response, List<Exception> errors)
-        {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public List<Exchange> getExchanges(Security subject, List<Exception> errors)
-        {
-            return Collections.emptyList();
+            return new QuoteFeedData();
         }
     }
 
@@ -111,7 +86,7 @@ public class LatestQuoteProviderPage extends AbstractQuoteProviderPage
                     s.setTickerSymbol(exchange.getId());
                 s.setFeed(feed.getId());
 
-                feed.updateLatestQuotes(s, new ArrayList<Exception>());
+                feed.getLatestQuote(s).ifPresent(s::setLatest);
 
                 Display.getDefault().asyncExec(() -> {
                     if (valueLatestPrices == null || valueLatestPrices.isDisposed())

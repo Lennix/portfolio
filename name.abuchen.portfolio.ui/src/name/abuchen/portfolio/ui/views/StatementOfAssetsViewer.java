@@ -74,6 +74,8 @@ import name.abuchen.portfolio.snapshot.security.SecurityPerformanceSnapshot;
 import name.abuchen.portfolio.ui.Images;
 import name.abuchen.portfolio.ui.Messages;
 import name.abuchen.portfolio.ui.UIConstants;
+import name.abuchen.portfolio.ui.dnd.ImportFromFileDropAdapter;
+import name.abuchen.portfolio.ui.dnd.ImportFromURLDropAdapter;
 import name.abuchen.portfolio.ui.dnd.SecurityDragListener;
 import name.abuchen.portfolio.ui.dnd.SecurityTransfer;
 import name.abuchen.portfolio.ui.editor.AbstractFinanceView;
@@ -181,6 +183,9 @@ public class StatementOfAssetsViewer
         assets = new TableViewer(container, SWT.FULL_SELECTION);
         ColumnViewerToolTipSupport.enableFor(assets, ToolTip.NO_RECREATE);
         ColumnEditingSupport.prepare(assets);
+
+        ImportFromURLDropAdapter.attach(this.assets.getControl(), owner.getPart());
+        ImportFromFileDropAdapter.attach(this.assets.getControl(), owner.getPart());
 
         assets.addSelectionChangedListener(event -> {
             Element element = (Element) ((IStructuredSelection) event.getSelection()).getFirstElement();
@@ -298,8 +303,9 @@ public class StatementOfAssetsViewer
                                 : null;
             }
         });
-        column.setComparator(new ElementComparator(new AttributeComparator(e -> ((Element) e).isSecurity()
-                        ? ((Element) e).getSecurityPosition().getPrice().getDate() : null)));
+        column.setComparator(new ElementComparator(new AttributeComparator(
+                        e -> ((Element) e).isSecurity() ? ((Element) e).getSecurityPosition().getPrice().getDate()
+                                        : null)));
         column.setVisible(false);
         support.addColumn(column);
 
@@ -362,8 +368,9 @@ public class StatementOfAssetsViewer
                 return null;
             }
         });
-        column.setComparator(new ElementComparator(new AttributeComparator(e -> ((Element) e).isSecurity()
-                        ? ((Element) e).getSecurityPosition().getFIFOPurchasePrice() : null)));
+        column.setComparator(new ElementComparator(new AttributeComparator(
+                        e -> ((Element) e).isSecurity() ? ((Element) e).getSecurityPosition().getFIFOPurchasePrice()
+                                        : null)));
         column.setVisible(false);
         support.addColumn(column);
 
@@ -384,7 +391,8 @@ public class StatementOfAssetsViewer
             }
         });
         column.setComparator(new ElementComparator(new AttributeComparator(e -> ((Element) e).isSecurity()
-                        ? ((Element) e).getSecurityPosition().getMovingAveragePurchasePrice() : null)));
+                        ? ((Element) e).getSecurityPosition().getMovingAveragePurchasePrice()
+                        : null)));
         column.setVisible(false);
         support.addColumn(column);
 
@@ -552,8 +560,8 @@ public class StatementOfAssetsViewer
         support.addColumn(column);
 
         column = new Column("capitalgainsmvavg", Messages.ColumnCapitalGainsMovingAverage, SWT.RIGHT, 80); //$NON-NLS-1$
-        labelProvider = new ReportingPeriodLabelProvider(SecurityPerformanceRecord::getCapitalGainsOnHoldingsMovingAverage, sum,
-                        true);
+        labelProvider = new ReportingPeriodLabelProvider(
+                        SecurityPerformanceRecord::getCapitalGainsOnHoldingsMovingAverage, sum, true);
         column.setOptions(new ReportingPeriodColumnOptions(Messages.ColumnCapitalGainsMovingAverage_Option, options));
         column.setGroupLabel(Messages.GroupLabelPerformance);
         column.setDescription(Messages.ColumnCapitalGainsMovingAverage_Description);
@@ -563,8 +571,10 @@ public class StatementOfAssetsViewer
         support.addColumn(column);
 
         column = new Column("capitalgainsmvavg%", Messages.ColumnCapitalGainsMovingAveragePercent, SWT.RIGHT, 80); //$NON-NLS-1$
-        labelProvider = new ReportingPeriodLabelProvider(SecurityPerformanceRecord::getCapitalGainsOnHoldingsMovingAveragePercent);
-        column.setOptions(new ReportingPeriodColumnOptions(Messages.ColumnCapitalGainsMovingAveragePercent_Option, options));
+        labelProvider = new ReportingPeriodLabelProvider(
+                        SecurityPerformanceRecord::getCapitalGainsOnHoldingsMovingAveragePercent);
+        column.setOptions(new ReportingPeriodColumnOptions(Messages.ColumnCapitalGainsMovingAveragePercent_Option,
+                        options));
         column.setGroupLabel(Messages.GroupLabelPerformance);
         column.setDescription(Messages.ColumnCapitalGainsMovingAveragePercent_Description);
         column.setLabelProvider(labelProvider);
@@ -624,9 +634,10 @@ public class StatementOfAssetsViewer
         support.addColumn(column);
 
         column = new Column("d%mvavg", Messages.ColumnDividendMovingAverageTotalRateOfReturn, SWT.RIGHT, 80); //$NON-NLS-1$
-        labelProvider = new ReportingPeriodLabelProvider(SecurityPerformanceRecord::getTotalRateOfReturnDivMovingAverage, null,
-                        false);
-        column.setOptions(new ReportingPeriodColumnOptions(Messages.ColumnDividendMovingAverageTotalRateOfReturn + " {0}", options)); //$NON-NLS-1$
+        labelProvider = new ReportingPeriodLabelProvider(
+                        SecurityPerformanceRecord::getTotalRateOfReturnDivMovingAverage, null, false);
+        column.setOptions(new ReportingPeriodColumnOptions(
+                        Messages.ColumnDividendMovingAverageTotalRateOfReturn + " {0}", options)); //$NON-NLS-1$
         column.setGroupLabel(Messages.GroupLabelDividends);
         column.setDescription(Messages.ColumnDividendMovingAverageTotalRateOfReturn_Description);
         column.setLabelProvider(labelProvider);
@@ -675,7 +686,8 @@ public class StatementOfAssetsViewer
             }
         });
         column.setComparator(new ElementComparator(new AttributeComparator(e -> ((Element) e).isPosition()
-                        ? ((Element) e).getPosition().getInvestmentVehicle().getCurrencyCode() : null)));
+                        ? ((Element) e).getPosition().getInvestmentVehicle().getCurrencyCode()
+                        : null)));
         column.setVisible(false);
         support.addColumn(column);
 
@@ -733,8 +745,9 @@ public class StatementOfAssetsViewer
                                 client.getBaseCurrency());
             }
         });
-        column.setComparator(new ElementComparator(new AttributeComparator(e -> ((Element) e).isPosition()
-                        ? ((Element) e).getPosition().getPosition().calculateValue() : null)));
+        column.setComparator(new ElementComparator(new AttributeComparator(
+                        e -> ((Element) e).isPosition() ? ((Element) e).getPosition().getPosition().calculateValue()
+                                        : null)));
         column.setVisible(false);
         support.addColumn(column);
 
@@ -756,7 +769,8 @@ public class StatementOfAssetsViewer
             }
         });
         column.setComparator(new ElementComparator(new AttributeComparator(e -> ((Element) e).isPosition()
-                        ? ((Element) e).getPosition().getPosition().getFIFOPurchaseValue() : null)));
+                        ? ((Element) e).getPosition().getPosition().getFIFOPurchaseValue()
+                        : null)));
         column.setVisible(false);
         support.addColumn(column);
 

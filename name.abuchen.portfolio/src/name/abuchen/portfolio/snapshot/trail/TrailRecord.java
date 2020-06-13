@@ -28,7 +28,7 @@ public interface TrailRecord
 
     public static TrailRecord empty()
     {
-        return new EmptyTrail();
+        return EmptyTrail.INSTANCE;
     }
 
     public static TrailRecord of(List<TrailRecord> trails)
@@ -62,11 +62,15 @@ public interface TrailRecord
 
     default TrailRecord add(TrailRecord trail)
     {
+        if (trail instanceof EmptyTrail)
+            return this;
         return new ArithmeticTrail(ArithmeticTrail.Operation.ADDITION, Messages.LabelSum, this, trail);
     }
 
     default TrailRecord substract(TrailRecord trail)
     {
+        if (trail instanceof EmptyTrail)
+            return this;
         return new ArithmeticTrail(ArithmeticTrail.Operation.SUBSTRACTION, Messages.LabelDifference, this, trail);
     }
 
