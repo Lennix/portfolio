@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>name.abuchen.portfolio</groupId>
 		<artifactId>portfolio-app</artifactId>
-		<version>0.46.4-SNAPSHOT</version>
+		<version>0.47.1-SNAPSHOT</version>
 		<relativePath>../portfolio-app</relativePath>
 	</parent>
 
@@ -183,6 +183,23 @@
 						<artifactId>exec-maven-plugin</artifactId>
 						<version>1.6.0</version>
 						<executions>
+							<execution>
+								<id>check-p2-inf-files</id>
+								<phase>validate</phase>
+								<!-- check that both p2.inf files are identical because both must 
+									have the same release notes. Unfortunately, Tycho seems to require that the 
+									files exist at the beginning of the build. -->
+								<goals>
+									<goal>exec</goal>
+								</goals>
+								<configuration>
+									<executable>diff</executable>
+									<arguments>
+										<argument>${project.basedir}/name.abuchen.portfolio.p2.inf</argument>
+										<argument>${project.basedir}/name.abuchen.portfolio.distro.p2.inf</argument>
+									</arguments>
+								</configuration>
+							</execution>
 							<execution>
 								<id>sign-macos-distro</id>
 								<phase>package</phase>

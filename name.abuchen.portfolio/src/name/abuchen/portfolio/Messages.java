@@ -15,6 +15,8 @@ public class Messages extends NLS
     public static String AttributesTERName;
     public static String AttributesVendorColumn;
     public static String AttributesVendorName;
+    public static String AttributesLogoName;
+    public static String AttributesLogoColumn;
     public static String ColumnCapitalGains;
     public static String ColumnCurrencyGains;
     public static String ColumnEarnings;
@@ -76,6 +78,7 @@ public class Messages extends NLS
     public static String CSVFormatNumberGermany;
     public static String CSVFormatNumberUS;
     public static String CSVFormatYYYYMMDD;
+    public static String CSVFormatYYYYMMDDSlashes;
     public static String CSVImportedSecurityLabel;
     public static String CSVImportGenericColumnLabel;
     public static String CSVImportSecurityExists;
@@ -159,6 +162,7 @@ public class Messages extends NLS
     public static String LabelTradeCalendarSix;
     public static String LabelTradeCalendarUseDefault;
     public static String LabelTradeCalendarEmpty;
+    public static String LabelTrailTransferFromXtoY;
     public static String LabelTrailWithoutTaxesAndFees;
     public static String LabelTrailXofYShares;
     public static String LabelTransferAccount;
@@ -276,7 +280,7 @@ public class Messages extends NLS
         NLS.initializeMessages(BUNDLE_NAME, Messages.class);
     }
 
-    private Messages()
+    protected Messages()
     {
     }
 }
