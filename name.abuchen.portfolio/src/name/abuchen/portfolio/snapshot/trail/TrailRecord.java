@@ -6,19 +6,20 @@ import java.util.Collections;
 import java.util.List;
 
 import name.abuchen.portfolio.Messages;
+import name.abuchen.portfolio.model.Portfolio;
 import name.abuchen.portfolio.model.Transaction;
+import name.abuchen.portfolio.model.TransactionOwner;
 import name.abuchen.portfolio.money.ExchangeRate;
 import name.abuchen.portfolio.money.Money;
 import name.abuchen.portfolio.money.Values;
-import name.abuchen.portfolio.snapshot.ClientSnapshot;
 import name.abuchen.portfolio.snapshot.SecurityPosition;
 
 public interface TrailRecord
 {
-    public static TrailRecord ofSnapshot(ClientSnapshot snapshot, SecurityPosition position)
+    public static TrailRecord ofPosition(LocalDate time, Portfolio portfolio, SecurityPosition position)
     {
-        return new DefaultTrail(snapshot.getTime(), Messages.LabelStatementOfAssets, position.getShares(),
-                        position.calculateValue());
+        return new DefaultTrail(time, Messages.LabelStatementOfAssets + " " + portfolio.getName(), //$NON-NLS-1$
+                        position.getShares(), position.calculateValue());
     }
 
     public static TrailRecord ofTransaction(Transaction t)
@@ -67,11 +68,11 @@ public interface TrailRecord
         return new ArithmeticTrail(ArithmeticTrail.Operation.ADDITION, Messages.LabelSum, this, trail);
     }
 
-    default TrailRecord substract(TrailRecord trail)
+    default TrailRecord subtract(TrailRecord trail)
     {
         if (trail instanceof EmptyTrail)
             return this;
-        return new ArithmeticTrail(ArithmeticTrail.Operation.SUBSTRACTION, Messages.LabelDifference, this, trail);
+        return new ArithmeticTrail(ArithmeticTrail.Operation.SUBTRACTION, Messages.LabelDifference, this, trail);
     }
 
     default TrailRecord fraction(Money value, long numerator, long denominator)
@@ -87,6 +88,13 @@ public interface TrailRecord
         return new DefaultTrail(rate.getTime(),
                         Messages.CSVColumn_ExchangeRate + ": " + Values.ExchangeRate.format(rate.getValue()), //$NON-NLS-1$
                         this.getShares(), value, this);
+    }
+
+    default TrailRecord transfer(LocalDate date, TransactionOwner<?> source, TransactionOwner<?> target)
+    {
+        return new DefaultTrail(date,
+                        MessageFormat.format(Messages.LabelTrailTransferFromXtoY, source.toString(), target.toString()),
+                        this.getShares(), this.getValue(), this);
     }
 
     default TrailRecord asGrossValue(Money grossValue)

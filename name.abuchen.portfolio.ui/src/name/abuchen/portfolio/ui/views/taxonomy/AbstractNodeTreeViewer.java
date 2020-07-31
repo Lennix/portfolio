@@ -41,6 +41,8 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
+import com.google.common.base.Strings;
+
 import name.abuchen.portfolio.model.Classification;
 import name.abuchen.portfolio.model.Classification.Assignment;
 import name.abuchen.portfolio.model.InvestmentVehicle;
@@ -53,10 +55,10 @@ import name.abuchen.portfolio.ui.Images;
 import name.abuchen.portfolio.ui.Messages;
 import name.abuchen.portfolio.ui.UIConstants;
 import name.abuchen.portfolio.ui.dnd.SecurityTransfer;
+import name.abuchen.portfolio.ui.editor.AbstractFinanceView;
 import name.abuchen.portfolio.ui.editor.PortfolioPart;
 import name.abuchen.portfolio.ui.selection.SecuritySelection;
 import name.abuchen.portfolio.ui.selection.SelectionService;
-import name.abuchen.portfolio.ui.util.BookmarkMenu;
 import name.abuchen.portfolio.ui.util.Colors;
 import name.abuchen.portfolio.ui.util.ContextMenu;
 import name.abuchen.portfolio.ui.util.SimpleAction;
@@ -67,13 +69,14 @@ import name.abuchen.portfolio.ui.util.viewers.ColumnEditingSupport.ModificationL
 import name.abuchen.portfolio.ui.util.viewers.ShowHideColumnHelper;
 import name.abuchen.portfolio.ui.util.viewers.StringEditingSupport;
 import name.abuchen.portfolio.ui.util.viewers.ValueEditingSupport;
+import name.abuchen.portfolio.ui.views.SecurityContextMenu;
 import name.abuchen.portfolio.ui.views.columns.AttributeColumn;
 import name.abuchen.portfolio.ui.views.columns.IsinColumn;
 import name.abuchen.portfolio.ui.views.columns.NameColumn;
 import name.abuchen.portfolio.ui.views.columns.NameColumn.NameColumnLabelProvider;
 import name.abuchen.portfolio.ui.views.columns.NoteColumn;
+import name.abuchen.portfolio.util.TextUtil;
 
-@SuppressWarnings("restriction")
 /* package */abstract class AbstractNodeTreeViewer extends Page implements ModificationListener
 {
     private static class ItemContentProvider implements ITreeContentProvider
@@ -283,14 +286,16 @@ import name.abuchen.portfolio.ui.views.columns.NoteColumn;
 
     private boolean useIndirectQuotation = false;
 
+    private final AbstractFinanceView view;
     private TreeViewer nodeViewer;
     private ShowHideColumnHelper support;
 
     private boolean isFirstView = true;
 
-    public AbstractNodeTreeViewer(TaxonomyModel model, TaxonomyNodeRenderer renderer)
+    public AbstractNodeTreeViewer(AbstractFinanceView view, TaxonomyModel model, TaxonomyNodeRenderer renderer)
     {
         super(model, renderer);
+        this.view = view;
     }
 
     @Inject
@@ -410,8 +415,8 @@ import name.abuchen.portfolio.ui.views.columns.NoteColumn;
 
     protected void addDimensionColumn(ShowHideColumnHelper support)
     {
-        Column column = new NameColumn("txname", Messages.ColumnLevels, SWT.NONE, 400); //$NON-NLS-1$
-        column.setLabelProvider(new NameColumnLabelProvider() // NOSONAR
+        Column column = new NameColumn("txname", Messages.ColumnLevels, SWT.NONE, 400, part.getClient()); //$NON-NLS-1$
+        column.setLabelProvider(new NameColumnLabelProvider(part.getClient()) // NOSONAR
         {
             @Override
             public Image getImage(Object e)
@@ -420,6 +425,21 @@ import name.abuchen.portfolio.ui.views.columns.NoteColumn;
                     return Images.UNASSIGNED_CATEGORY.image();
                 return super.getImage(e);
             }
+
+            @Override
+            public String getToolTipText(Object e)
+            {
+                TaxonomyNode node = (TaxonomyNode) e;
+
+                if (!node.isClassification())
+                    return super.getToolTipText(e);
+
+                String note = node.getClassification().getNote();
+
+                return Strings.isNullOrEmpty(note) ? super.getToolTipText(e)
+                                : TextUtil.wordwrap(node.getName() + "\n\n" + note); //$NON-NLS-1$
+            }
+
         });
         new StringEditingSupport(Named.class, "name") //$NON-NLS-1$
         {
@@ -477,7 +497,8 @@ import name.abuchen.portfolio.ui.views.columns.NoteColumn;
             public Color getBackground(Object element)
             {
                 TaxonomyNode node = (TaxonomyNode) element;
-                return node.isAssignment() && getModel().hasWeightError(node) ? Colors.WARNING : null;
+                return node.isAssignment() && getModel().hasWeightError(node) ? Colors.theme().warningBackground()
+                                : null;
             }
 
             @Override
@@ -799,7 +820,7 @@ import name.abuchen.portfolio.ui.views.columns.NoteColumn;
             if (security != null)
             {
                 manager.add(new Separator());
-                manager.add(new BookmarkMenu(part, security));
+                new SecurityContextMenu(this.view).menuAboutToShow(manager, security);
             }
         }
     }

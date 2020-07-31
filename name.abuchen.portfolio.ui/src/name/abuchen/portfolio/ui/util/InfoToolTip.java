@@ -13,6 +13,8 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Text;
 
+import name.abuchen.portfolio.ui.UIConstants;
+
 public final class InfoToolTip extends ToolTip
 {
     private Control control;
@@ -40,20 +42,21 @@ public final class InfoToolTip extends ToolTip
     @Override
     protected Composite createToolTipContentArea(Event event, Composite parent)
     {
-        Composite result = new Composite(parent, SWT.NONE);
+        parent.setData(UIConstants.CSS.CLASS_NAME, "tooltip"); //$NON-NLS-1$
 
-        result.setBackground(Colors.INFO_TOOLTIP_BACKGROUND);
-        result.setLayout(new GridLayout());
+        Composite result = new Composite(parent, SWT.NONE);
+        GridLayout layout = new GridLayout();
+        result.setLayout(layout);
 
         // create tool tip with a reasonable width
-        int width = SWTHelper.stringWidth(result, "ABCDEFGHIJK") * 5; //$NON-NLS-1$
+        int maximumWidth = SWTHelper.stringWidth(result, "ABCDEFGHIJK") * 5; //$NON-NLS-1$
+        int actualWidth = SWTHelper.stringWidth(result, message.get()) + layout.marginWidth * 2;
+        int widthHint = Math.min(maximumWidth, actualWidth);
 
         Text text = new Text(result, SWT.WRAP);
-        text.setBackground(Colors.INFO_TOOLTIP_BACKGROUND);
-        text.setForeground(parent.getDisplay().getSystemColor(SWT.COLOR_BLACK));
         text.setText(message.get());
         GridData gridData = new GridData();
-        gridData.widthHint = width;
+        gridData.widthHint = widthHint;
         text.setLayoutData(gridData);
         Dialog.applyDialogFont(result);
         return result;

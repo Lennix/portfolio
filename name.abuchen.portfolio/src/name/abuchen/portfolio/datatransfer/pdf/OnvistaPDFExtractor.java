@@ -56,7 +56,7 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
         DocumentType type = new DocumentType("Wir haben für Sie gekauft");
         this.addDocumentTyp(type);
 
-        Block block = new Block("Wir haben für Sie gekauft(.*)");
+        Block block = new Block("Wir haben für Sie gekauft(.*)", "(Dieser Beleg wird|Finanzamt)(.*)");
         type.addBlock(block);
 
         Transaction<BuySellEntry> pdfTransaction = new Transaction<>();
@@ -71,12 +71,12 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
                         .find("Gattungsbezeichnung ISIN") //
                         .match("(?<name>.*) (?<isin>[^ ]\\S*)$") //
                         .find("Nominal Kurs") //
-                        .match("^\\w{3} ([\\d,.]*) (?<currency>\\w{3}) ([\\d,.]*)") //
+                        .match("^\\w{3} ([\\d,\\.]*) (?<currency>\\w{3}) ([\\d,\\.]*)") //
                         .assign((t, v) -> t.setSecurity(getOrCreateSecurity(v)))
 
                         .section("notation", "shares") //
                         .find("Nominal Kurs") //
-                        .match("(?<notation>^\\w{3}+) (?<shares>[\\d,.]*) (?<currency>\\w{3}) ([\\d,.]*)") //
+                        .match("(?<notation>^\\w{3}) (?<shares>[\\d,\\.]*) (?<currency>\\w{3}) ([\\d,\\.]*)") //
                         .assign((t, v) -> {
                             String notation = v.get("notation");
                             if (notation != null && !notation.equalsIgnoreCase("STK"))
@@ -91,7 +91,7 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
                         })
 
                         .section("date") //
-                        .match("Handelstag (?<date>\\d+.\\d+.\\d{4}+) (.*)") //
+                        .match("Handelstag (?<date>\\d+\\.\\d+\\.\\d{4}) (.*)") //
                         .assign((t, v) -> t.setDate(asDate(v.get("date"))))
 
                         .section("time") //
@@ -110,7 +110,7 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
                                                         // Wert Konto-Nr. Betrag zu Ihren Lasten
                                                         // 01.06.2011 172306238 EUR 6,40
                                                         // @formatter:on
-                                                        .match("(\\d+.\\d+.\\d{4}+) (\\d{6,12}) (?<currency>\\w{3}+) (?<amount>\\d{1,3}(\\.\\d{3})*(,\\d{2})?)$")
+                                                        .match("(\\d+\\.\\d+\\.\\d{4}) (\\d{6,12}) (?<currency>\\w{3}) (?<amount>\\d{1,3}(\\.\\d{3})*(,\\d{2})?)$")
                                                         .assign((t, v) -> {
                                                             t.setAmount(asAmount(v.get("amount")));
                                                             t.setCurrencyCode(asCurrencyCode(v.get("currency")));
@@ -118,7 +118,7 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
 
                                         section -> section.attributes("amount", "currency", "forex", "exchangeRate")
                                                         .find("Wert(\\s+)Konto-Nr. Devisenkurs Betrag zu Ihren Lasten(\\s*)$")
-                                                        .match("(\\d+.\\d+.\\d{4}+) (\\d{6,12}) .../(?<forex>\\w{3}+) (?<exchangeRate>[\\d,.]*) (?<currency>\\w{3}+) (?<amount>\\d{1,3}(\\.\\d{3})*(,\\d{2})?)$")
+                                                        .match("(\\d+\\.\\d+\\.\\d{4}) (\\d{6,12}) .../(?<forex>\\w{3}) (?<exchangeRate>[\\d,\\.]*) (?<currency>\\w{3}) (?<amount>[\\d,\\.]*)$")
                                                         .assign((t, v) -> {
 
                                                             t.setAmount(asAmount(v.get("amount")));
@@ -131,20 +131,18 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
                                                                 BigDecimal exchangeRate = asExchangeRate(
                                                                                 v.get("exchangeRate"));
                                                                 BigDecimal reverseRate = BigDecimal.ONE.divide(
-                                                                                exchangeRate, 10,
-                                                                                RoundingMode.HALF_DOWN);
+                                                                                exchangeRate, 10, RoundingMode.HALF_UP);
 
                                                                 long fxAmount = exchangeRate.multiply(BigDecimal
                                                                                 .valueOf(t.getPortfolioTransaction()
                                                                                                 .getAmount()))
-                                                                                .setScale(0, RoundingMode.HALF_DOWN)
+                                                                                .setScale(0, RoundingMode.HALF_UP)
                                                                                 .longValue();
 
                                                                 Unit grossValue = new Unit(Unit.Type.GROSS_VALUE,
                                                                                 t.getPortfolioTransaction()
                                                                                                 .getMonetaryAmount(),
-                                                                                Money.of(forex, fxAmount),
-                                                                                reverseRate);
+                                                                                Money.of(forex, fxAmount), reverseRate);
 
                                                                 t.getPortfolioTransaction().addUnit(grossValue);
                                                             }
@@ -160,7 +158,7 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
         DocumentType type = new DocumentType("Wir haben für Sie verkauft");
         this.addDocumentTyp(type);
 
-        Block block = new Block("Wir haben für Sie verkauft(.*)");
+        Block block = new Block("Wir haben für Sie verkauft(.*)", "(Dieser Beleg wird|Finanzamt)(.*)");
         type.addBlock(block);
 
         Transaction<BuySellEntry> pdfTransaction = new Transaction<>();
@@ -191,16 +189,62 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
                             }
                         })
 
-                        .section("date", "time", "amount", "currency") //
-                        .match("Handelstag (?<date>\\d+.\\d+.\\d{4}+) (.*)") //
-                        .match("Handelszeit (?<time>\\d+:\\d+)(.*)")
-                        .find("Wert(\\s+)Konto-Nr. Betrag zu Ihren Gunsten(\\s*)$")
-                        .match("(\\d+.\\d+.\\d{4}+) (\\d{6,12}) (?<currency>\\w{3}+) (?<amount>\\d{1,3}(\\.\\d{3})*(,\\d{2})?)")
+                        .section("date") //
+                        .match("Handelstag (?<date>\\d+\\.\\d+\\.\\d{4}) (.*)") //
+                        .assign((t, v) -> t.setDate(asDate(v.get("date"))))
+
+                        .section("time") //
+                        .optional() //
+                        .match("Handelszeit (?<time>\\d+:\\d+)(.*)") //
                         .assign((t, v) -> {
-                            t.setDate(asDate(v.get("date"), v.get("time")));
-                            t.setAmount(asAmount(v.get("amount")));
-                            t.setCurrencyCode(asCurrencyCode(v.get("currency")));
+                            LocalTime time = asTime(v.get("time"));
+                            t.setDate(t.getPortfolioTransaction().getDateTime().with(time));
                         })
+
+                        .oneOf( //
+                                        section -> section.attributes("amount", "currency")
+                                                        .find("Wert(\\s+)Konto-Nr. Betrag zu Ihren Gunsten(\\s*)$")
+                                                        // @formatter:off
+                                                        // Wert Konto-Nr. Betrag zu Ihren Lasten
+                                                        // 01.06.2011 172306238 EUR 6,40
+                                                        // @formatter:on
+                                                        .match("(\\d+\\.\\d+\\.\\d{4}) (\\d{6,12}) (?<currency>\\w{3}) (?<amount>\\d{1,3}(\\.\\d{3})*(,\\d{2})?)$")
+                                                        .assign((t, v) -> {
+                                                            t.setAmount(asAmount(v.get("amount")));
+                                                            t.setCurrencyCode(asCurrencyCode(v.get("currency")));
+                                                        }),
+
+                                        section -> section.attributes("amount", "currency", "forex", "exchangeRate")
+                                                        .find("Wert(\\s+)Konto-Nr. Devisenkurs Betrag zu Ihren Gunsten(\\s*)$")
+                                                        .match("(\\d+\\.\\d+\\.\\d{4}) (\\d{6,12}) .../(?<forex>\\w{3}) (?<exchangeRate>[\\d,\\.]*) (?<currency>\\w{3}) (?<amount>[\\d,\\.]*)$")
+                                                        .assign((t, v) -> {
+
+                                                            t.setAmount(asAmount(v.get("amount")));
+                                                            t.setCurrencyCode(asCurrencyCode(v.get("currency")));
+
+                                                            String forex = asCurrencyCode(v.get("forex"));
+                                                            if (t.getPortfolioTransaction().getSecurity()
+                                                                            .getCurrencyCode().equals(forex))
+                                                            {
+                                                                BigDecimal exchangeRate = asExchangeRate(
+                                                                                v.get("exchangeRate"));
+                                                                BigDecimal reverseRate = BigDecimal.ONE.divide(
+                                                                                exchangeRate, 10, RoundingMode.HALF_UP);
+
+                                                                long fxAmount = exchangeRate.multiply(BigDecimal
+                                                                                .valueOf(t.getPortfolioTransaction()
+                                                                                                .getAmount()))
+                                                                                .setScale(0, RoundingMode.HALF_UP)
+                                                                                .longValue();
+
+                                                                Unit grossValue = new Unit(Unit.Type.GROSS_VALUE,
+                                                                                t.getPortfolioTransaction()
+                                                                                                .getMonetaryAmount(),
+                                                                                Money.of(forex, fxAmount), reverseRate);
+
+                                                                t.getPortfolioTransaction().addUnit(grossValue);
+                                                            }
+                                                        }))
 
                         .wrap(BuySellEntryItem::new);
 
@@ -408,7 +452,7 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
 
                                                             long fxAmount = exchangeRate
                                                                             .multiply(BigDecimal.valueOf(t.getAmount()))
-                                                                            .setScale(0, RoundingMode.HALF_DOWN)
+                                                                            .setScale(0, RoundingMode.HALF_UP)
                                                                             .longValue();
 
                                                             Money forex = Money.of(asCurrencyCode(v.get("fxCurrency")),
@@ -417,11 +461,15 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
                                                             Unit unit = new Unit(Unit.Type.GROSS_VALUE,
                                                                             t.getMonetaryAmount(), forex,
                                                                             BigDecimal.ONE.divide(exchangeRate, 10,
-                                                                                            RoundingMode.HALF_DOWN));
-                                                            
-                                                            // add gross value unit only if currency code of
-                                                            // security actually matches
-                                                            if (unit.getForex().getCurrencyCode().equals(t.getSecurity().getCurrencyCode()))
+                                                                                            RoundingMode.HALF_UP));
+
+                                                            // add gross value
+                                                            // unit only if
+                                                            // currency code of
+                                                            // security actually
+                                                            // matches
+                                                            if (unit.getForex().getCurrencyCode()
+                                                                            .equals(t.getSecurity().getCurrencyCode()))
                                                                 t.addUnit(unit);
                                                         })
 
@@ -447,11 +495,10 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
                             .equals(tax.getCurrencyCode()))
             {
                 Unit gv = grossValue.get();
-
+                Money currentTax = t.getUnitSum(Unit.Type.TAX);
+                
                 Money money = Money.of(t.getCurrencyCode(), BigDecimal.valueOf(tax.getAmount())
-                                .multiply(gv.getExchangeRate())
-                                .setScale(0, RoundingMode.HALF_DOWN)
-                                .longValue());
+                                .multiply(gv.getExchangeRate()).setScale(0, RoundingMode.HALF_UP).longValue());
 
                 t.addUnit(new Unit(Unit.Type.TAX, money, tax, gv.getExchangeRate()));
 
@@ -459,12 +506,13 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
 
                 t.removeUnit(grossValue.get());
 
-                t.addUnit(new Unit(Unit.Type.GROSS_VALUE,
-                                Money.of(gv.getAmount().getCurrencyCode(),
-                                                grossValue.get().getAmount().getAmount()
-                                                                + money.getAmount()),
-                                Money.of(gv.getForex().getCurrencyCode(), gv.getForex().getAmount()
-                                                                + tax.getAmount()),
+                Money grossValueWithTax = Money.of(gv.getAmount().getCurrencyCode(),
+                                grossValue.get().getAmount().getAmount() + money.getAmount() + currentTax.getAmount());
+                Money grossValueWithTaxFx = Money.of(gv.getForex().getCurrencyCode(),
+                                BigDecimal.valueOf(grossValueWithTax.getAmount())
+                                                .divide(gv.getExchangeRate(), 0, RoundingMode.HALF_UP).longValue());
+
+                t.addUnit(new Unit(Unit.Type.GROSS_VALUE, grossValueWithTax, grossValueWithTaxFx,
                                 gv.getExchangeRate()));
             }
             else if (type.getCurrentContext()
@@ -473,27 +521,26 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
                 BigDecimal exchangeRate = asExchangeRate(type.getCurrentContext()
                                 .get(t.getCurrencyCode() + "/" + tax.getCurrencyCode()));
 
-                Money money = Money.of(t.getCurrencyCode(),
-                                BigDecimal.valueOf(tax.getAmount())
-                                                .divide(exchangeRate, 0, RoundingMode.HALF_DOWN)
-                                                .longValue());
+                Money money = Money.of(t.getCurrencyCode(), BigDecimal.valueOf(tax.getAmount())
+                                .divide(exchangeRate, 0, RoundingMode.HALF_UP).longValue());
 
                 t.addUnit(new Unit(Unit.Type.TAX, money));
             }
         };
         
+        addTaxesSectionsTransaction(pdfTransaction);
+        
         pdfTransaction
                         .section("tax", "currency").optional() //
-                        .match("^davon anrechenbare US-Quellensteuer [0-9]+% (?<currency>\\w{3}+)\\s+(?<tax>[\\d.,]*)")
+                        .match("^US-Quellensteuer ([0-9,]+% )?(?<currency>\\w{3}+)\\s+(?<tax>[\\d.,]*)")
                         .assign(taxAssignment)
 
                         .section("tax", "currency").optional() //
-                        .match("^ausländische Quellensteuer [0-9]+% (?<currency>\\w{3}+)\\s+(?<tax>[\\d.,]+)")
+                        .match("^ausländische Quellensteuer [0-9,]+% (?<currency>\\w{3}+)\\s+(?<tax>[\\d.,]+)")
                         .assign(taxAssignment)
 
                         .wrap(TransactionItem::new);
 
-        addTaxesSectionsTransaction(pdfTransaction);
 
         // optional: Reinvestierung in:
         block = new Block("Reinvestierung.*");
@@ -546,10 +593,10 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
         Block block = new Block("Wir erhielten zu Gunsten Ihres Depots(.*)");
         type.addBlock(block);
 
-        Transaction<BuySellEntry> pdfTransaction = new Transaction<>();
+        Transaction<PortfolioTransaction> pdfTransaction = new Transaction<>();
         pdfTransaction.subject(() -> {
-            BuySellEntry entry = new BuySellEntry();
-            entry.setType(PortfolioTransaction.Type.TRANSFER_IN);
+            PortfolioTransaction entry = new PortfolioTransaction();
+            entry.setType(PortfolioTransaction.Type.DELIVERY_INBOUND);
             return entry;
         });
 
@@ -574,14 +621,12 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
                             {
                                 t.setShares(asShares(v.get("shares")));
                             }
-                            t.setDate(asDate(v.get("date")));
+                            t.setDateTime(asDate(v.get("date")));
                             t.setCurrencyCode(asCurrencyCode(
-                                            t.getPortfolioTransaction().getSecurity().getCurrencyCode()));
+                                            t.getSecurity().getCurrencyCode()));
                         })
 
-                        .wrap(BuySellEntryItem::new);
-
-        addFeesSectionsTransaction(pdfTransaction);
+                        .wrap(TransactionItem::new);
     }
 
     private void addCapitalReductionTransaction()
@@ -804,14 +849,14 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
         
         // variant if only one date exits in document, then remember it here...
         final DocumentType type = new DocumentType("Umtausch", (context, lines) -> {
-            Pattern pDate = Pattern.compile("^(?<contextDate>\\d+\\.\\d+\\.\\d{4}+) [\\d+].*");
+            Pattern pDate = Pattern.compile("(^|.* / )(?<contextDate>\\d{2}\\.\\d{2}\\.\\d{4}) .*");
             // read the current context here
             for (String line : lines)
             {
                 Matcher m = pDate.matcher(line);
                 if (m.matches())
                 {
-                    context.put("contextDate", m.group(1));
+                    context.put("contextDate", m.group(2));
                 }
             }
         });
@@ -858,9 +903,10 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
 
                         .section("date").optional() //
                         .find("(.*)(Schlusstag|Ex-Tag|Wert Konto-Nr.*)")
-                        .match("(.*)(^|\\s+)(?<date>\\d+\\.\\d+\\.\\d{4}+)") //
+                        .match("(.*)(^|\\s+)(?<date>\\d+\\.\\d+\\.\\d{4}+).*") //
                         .assign((t, v) -> {
                             t.setDateTime(asDate(v.get("date")));
+                            type.getCurrentContext().put("contextDate", v.get("date"));
                         })
 
                         .section("notation", "shares") //
@@ -881,7 +927,6 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
                             if (t.getDateTime() == null)
                             {
                                 t.setDateTime(asDate(type.getCurrentContext().get("contextDate")));
-                                
                             }
                         })
 
@@ -1439,7 +1484,7 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
     private <T extends Transaction<?>> void addTaxesSectionsTransaction(T pdfTransaction)
     {
         pdfTransaction.section("tax", "withheld", "sign").optional() //
-                        .match("(?<withheld>\\w+|^(Verwahrart\\s.*)?)(\\s*)Kapitalertragsteuer(\\s*)(?<currency>\\w{3}+)(\\s+)(?<tax>\\d{1,3}(\\.\\d{3})*(,\\d{2})?)(?<sign>-|\\s+|$)?")
+                        .match("(?<withheld>\\w+|^(Verwahrart\\s.*)?|^(Lagerland\\s.*)?)(\\s*)Kapitalertragsteuer(\\s*)(?<currency>\\w{3}+)(\\s+)(?<tax>\\d{1,3}(\\.\\d{3})*(,\\d{2})?)(?<sign>-|\\s+|$)?")
                         .assign((t, v) -> {
                             if ("-".equalsIgnoreCase(v.get("sign"))
                                             || "einbehaltene".equalsIgnoreCase(v.get("withheld")))
@@ -1459,7 +1504,7 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
                         })
 
                         .section("soli", "withheld", "sign").optional()
-                        .match("(?<withheld>\\w+|^)(\\s*)Solidaritätszuschlag(\\s*)(?<currency>\\w{3}+)(\\s+)(?<soli>\\d{1,3}(\\.\\d{3})*(,\\d{2})?)(?<sign>-|\\s+|$)?")
+                        .match("(?<withheld>\\w+|^|.*)(\\s*)Solidaritätszuschlag(\\s*)(?<currency>\\w{3}+)(\\s+)(?<soli>\\d{1,3}(\\.\\d{3})*(,\\d{2})?)(?<sign>-|\\s+|$)?")
                         .assign((t, v) -> {
                             if ("-".equalsIgnoreCase(v.get("sign"))
                                             || "einbehaltener".equalsIgnoreCase(v.get("withheld")))
@@ -1520,7 +1565,7 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
                     Money forex = Money.of(currency, asAmount(v.get("fee")));
                     Money amount = Money.of(t.getPortfolioTransaction().getCurrencyCode(),
                                     gv.getExchangeRate().multiply(BigDecimal.valueOf(forex.getAmount()))
-                                                    .setScale(0, RoundingMode.HALF_DOWN).longValue());
+                                                    .setScale(0, RoundingMode.HALF_UP).longValue());
 
                     t.getPortfolioTransaction().addUnit(new Unit(Unit.Type.FEE, amount, forex, gv.getExchangeRate()));
 
@@ -1570,7 +1615,7 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
         Block block1 = new Block("Wir haben für Sie (ge|ver)kauft(.*)");
         type.addBlock(block1);
 
-        Block block2 = new Block("(Aus|Ein)buchung:(.*)");
+        Block block2 = new Block("Gutschriftsanzeige|(Aus|Ein)buchung:(.*)");
         type.addBlock(block2);
 
         Transaction<AccountTransaction> taxRefundTransaction = new Transaction<AccountTransaction>()
@@ -1582,7 +1627,7 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
                         })
 
                         .section("name", "isin") //
-                        .find("Gattungsbezeichnung ISIN") //
+                        .find("Gattungsbezeichnung (.*)ISIN") //
                         .match("(?<name>.*) (?<isin>[^ ]\\S*)$") //
                         .assign((t, v) -> t.setSecurity(getOrCreateSecurity(v)))
 
@@ -1688,7 +1733,7 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
                                 Money mTaxesFxInEUR = Money.of(asCurrencyCode(v.get("currency")),
                                                 asAmount(v.get("amountSum")));
                                 BigDecimal inverseRate = BigDecimal.valueOf(asAmount(v.get("amountSum")))
-                                                .divide(BigDecimal.valueOf(t.getAmount()), 10, RoundingMode.HALF_DOWN);
+                                                .divide(BigDecimal.valueOf(t.getAmount()), 10, RoundingMode.HALF_UP);
                                 t.addUnit(new Unit(Unit.Type.TAX, mTaxesFxInEUR, mTaxesFx, inverseRate));
                                 t.setAmount(asAmount(v.get("amountSum")));
                             }
@@ -1734,12 +1779,18 @@ public class OnvistaPDFExtractor extends AbstractPDFExtractor
                         .section("date").optional()
                         .match("^Nominal Ex-Tag Zahltag Jahreswert Vorabpauschale pro Stück")
                         // STK 1.212,000 02.01.2020 02.01.2020 EUR 0,1019
-                        .match("STK .* (?<exdate>\\d+\\.\\d+\\.\\d{4}+) (?<date>\\d+\\.\\d+\\.\\d{4}+) (\\w{3}+) .*")
+                        .match("STK .* (?<exdate>\\d+\\.\\d+\\.\\d{4}+) (?<date>\\d+\\.\\d+\\.\\d{4}+) (?<currency>\\w{3}+) .*")
                         .assign((t, v) -> {
+                            // if all taxes are covered by Freistellungauftrag/Verlustopf, section "Wert Konto-Nr. Betrag zu
+                            // Ihren Lasten" is not present -> extract currency here
+                            if (t.getCurrencyCode() == null)
+                                t.setCurrencyCode(asCurrencyCode(v.get("currency")));
                             t.setDateTime(asDate(v.get("date")));
                         })
 
-                        .wrap(t -> t.getAmount() != 0 ? new TransactionItem(t) : null);
+                        .wrap(t -> t.getAmount() != 0 ? new TransactionItem(t)
+                                        : new NonImportableItem("Steuerpflichtige Vorabpauschale mit 0 "
+                                                        + t.getCurrencyCode()));
 
         block.set(taxVorabpauschaleTransaction);
     }

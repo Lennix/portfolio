@@ -36,6 +36,9 @@ import name.abuchen.portfolio.money.CurrencyConverterImpl;
 import name.abuchen.portfolio.money.ExchangeRateProviderFactory;
 import name.abuchen.portfolio.money.Values;
 import name.abuchen.portfolio.snapshot.PortfolioSnapshot;
+import name.abuchen.portfolio.snapshot.filter.ClientFilter;
+import name.abuchen.portfolio.snapshot.filter.EmptyFilter;
+import name.abuchen.portfolio.snapshot.filter.PortfolioClientFilter;
 import name.abuchen.portfolio.ui.Images;
 import name.abuchen.portfolio.ui.Messages;
 import name.abuchen.portfolio.ui.handlers.ImportPDFHandler;
@@ -199,8 +202,8 @@ public class PortfolioListView extends AbstractListView implements ModificationL
         portfolioColumns = new ShowHideColumnHelper(PortfolioListView.class.getSimpleName() + "@top2", //$NON-NLS-1$
                         getPreferenceStore(), portfolios, layout);
 
-        Column column = new NameColumn("0", Messages.ColumnPortfolio, SWT.None, 100); //$NON-NLS-1$
-        column.setLabelProvider(new NameColumnLabelProvider() // NOSONAR
+        Column column = new NameColumn("0", Messages.ColumnPortfolio, SWT.None, 100, getClient()); //$NON-NLS-1$
+        column.setLabelProvider(new NameColumnLabelProvider(getClient()) // NOSONAR
         {
             @Override
             public Color getForeground(Object e)
@@ -279,13 +282,17 @@ public class PortfolioListView extends AbstractListView implements ModificationL
                 transactions.refresh();
                 CurrencyConverter converter = new CurrencyConverterImpl(factory,
                                 portfolio.getReferenceAccount().getCurrencyCode());
-                statementOfAssets.setInput(PortfolioSnapshot.create(portfolio, converter, LocalDate.now()));
+
+                ClientFilter clientFilter = new PortfolioClientFilter(portfolio);
+
+                statementOfAssets.setInput(clientFilter, LocalDate.now(), converter);
             }
             else
             {
                 transactions.setInput(null);
                 transactions.refresh();
-                statementOfAssets.setInput((PortfolioSnapshot) null);
+                CurrencyConverter converter = new CurrencyConverterImpl(factory, getClient().getBaseCurrency());
+                statementOfAssets.setInput(new EmptyFilter(), LocalDate.now(), converter);
             }
         });
 

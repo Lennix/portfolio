@@ -5,7 +5,7 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.number.IsCloseTo.closeTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -65,7 +65,7 @@ public class SecurityTaxAndFeeAccountTransactionsTestCase
         SecurityPerformanceRecord record = snapshot.getRecords().stream().filter(r -> r.getSecurity().equals(adidas))
                         .findAny().orElseThrow(IllegalArgumentException::new);
 
-        assertThat(record.getTransactions().size(), is(6));
+        assertThat(record.getLineItems().size(), is(6));
 
         // fees and taxes from the buy transaction + separate transactions
         assertThat(record.getFees(), is(Money.of(CurrencyUnit.EUR, Values.Amount.factorize(10d + 10d - 5d))));

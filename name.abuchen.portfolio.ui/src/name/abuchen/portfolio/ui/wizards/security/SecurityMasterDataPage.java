@@ -19,6 +19,7 @@ import org.eclipse.swt.widgets.Text;
 import name.abuchen.portfolio.ui.Images;
 import name.abuchen.portfolio.ui.Messages;
 import name.abuchen.portfolio.ui.util.BindingHelper;
+import name.abuchen.portfolio.ui.util.Colors;
 import name.abuchen.portfolio.ui.util.DesktopAPI;
 import name.abuchen.portfolio.ui.util.SWTHelper;
 
@@ -69,18 +70,20 @@ public class SecurityMasterDataPage extends AbstractPage
             unlink.setImage(Images.ONLINE.image());
             unlink.addSelectionListener(SelectionListener.widgetSelectedAdapter(event -> {
                 model.setOnlineId(null);
-                isin.setEnabled(true);
-                wkn.setEnabled(true);
+                isin.setEditable(true);
+                isin.setBackground(null);
+                wkn.setEditable(true);
+                wkn.setBackground(null);
                 link.setEnabled(false);
                 unlink.setEnabled(false);
             }));
         }
 
-        ComboViewer currencyCode = bindings.bindCurrencyCodeCombo(container, Messages.ColumnCurrency, "currencyCode", //$NON-NLS-1$
+        Control currencyCode = bindings.bindCurrencyCodeCombo(container, Messages.ColumnCurrency, "currencyCode", //$NON-NLS-1$
                         !isExchangeRate);
         if (model.getSecurity().hasTransactions(model.getClient()))
         {
-            currencyCode.getCombo().setEnabled(false);
+            currencyCode.setEnabled(false);
 
             // empty cell
             new Label(container, SWT.NONE).setText(""); //$NON-NLS-1$
@@ -98,15 +101,19 @@ public class SecurityMasterDataPage extends AbstractPage
 
         if (isExchangeRate)
         {
-            ComboViewer targetCurrencyCode = bindings.bindCurrencyCodeCombo(container, Messages.ColumnTargetCurrency,
+            Control targetCurrencyCode = bindings.bindCurrencyCodeCombo(container, Messages.ColumnTargetCurrency,
                             "targetCurrencyCode", false); //$NON-NLS-1$
-            targetCurrencyCode.getCombo().setToolTipText(Messages.ColumnTargetCurrencyToolTip);
+            targetCurrencyCode.setToolTipText(Messages.ColumnTargetCurrencyToolTip);
         }
 
         if (!isExchangeRate)
         {
             isin = bindings.bindISINInput(container, Messages.ColumnISIN, "isin"); //$NON-NLS-1$
-            isin.setEnabled(!isSyncedOnline);
+            if (isSyncedOnline)
+            {
+                isin.setEditable(false);
+                isin.setBackground(Colors.SIDEBAR_BACKGROUND_SELECTED);
+            }
         }
 
         bindings.bindStringInput(container, Messages.ColumnTicker, "tickerSymbol", SWT.NONE, 12); //$NON-NLS-1$
@@ -114,7 +121,11 @@ public class SecurityMasterDataPage extends AbstractPage
         if (!isExchangeRate)
         {
             wkn = bindings.bindStringInput(container, Messages.ColumnWKN, "wkn", SWT.NONE, 12); //$NON-NLS-1$
-            wkn.setEnabled(!isSyncedOnline);
+            if (isSyncedOnline)
+            {
+                wkn.setEditable(false);
+                wkn.setBackground(Colors.SIDEBAR_BACKGROUND_SELECTED);
+            }
 
             ComboViewer calendar = bindings.bindCalendarCombo(container, Messages.LabelSecurityCalendar, "calendar"); //$NON-NLS-1$
             calendar.getCombo().setToolTipText(Messages.LabelSecurityCalendarToolTip);

@@ -47,6 +47,7 @@ public enum Images
     CALENDAR_ON("calendar_on.png"), //$NON-NLS-1$
     CALENDAR_OFF("calendar_off.png"), //$NON-NLS-1$
     CLOCK("clock.png"), //$NON-NLS-1$
+    CLOUD("cloud.png"), //$NON-NLS-1$
 
     // views
 
@@ -89,7 +90,9 @@ public enum Images
     GREEN_ARROW("green_arrow.png"), //$NON-NLS-1$
 
     HANDLE_NS("handle_ns.png"), //$NON-NLS-1$
-    HANDLE_WE("handle_we.png"); //$NON-NLS-1$
+    HANDLE_WE("handle_we.png"), //$NON-NLS-1$
+
+    DIVVYDIARY_LOGO("divvydiary.com-logo.png"); //$NON-NLS-1$
 
     static
     {

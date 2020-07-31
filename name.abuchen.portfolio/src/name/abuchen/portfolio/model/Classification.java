@@ -1,5 +1,6 @@
 package name.abuchen.portfolio.model;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -81,6 +82,7 @@ public class Classification implements Named
     }
 
     public static final int ONE_HUNDRED_PERCENT = 100 * Values.Weight.factor();
+    public static final BigDecimal ONE_HUNDRED_PERCENT_BD = BigDecimal.valueOf(Values.Weight.factorize(100));
 
     public static final String UNASSIGNED_ID = "$unassigned$"; //$NON-NLS-1$
     public static final String VIRTUAL_ROOT = "$virtualroot$"; //$NON-NLS-1$
@@ -211,6 +213,11 @@ public class Classification implements Named
     public void removeAssignment(Assignment assignment)
     {
         assignments.remove(assignment);
+    }
+
+    public void clearAssignments()
+    {
+        assignments.clear();
     }
 
     public int getWeight()
@@ -355,13 +362,18 @@ public class Classification implements Named
         List<Classification> answer = new ArrayList<>();
 
         LinkedList<Classification> stack = new LinkedList<>();
-        stack.addAll(getChildren());
+
+        List<Classification> list = new ArrayList<>(getChildren());
+        list.sort((r, l) -> Integer.compare(r.getRank(), l.getRank()));
+        stack.addAll(list);
 
         while (!stack.isEmpty())
         {
             Classification c = stack.pop();
             answer.add(c);
-            stack.addAll(0, c.getChildren());
+            list = new ArrayList<>(c.getChildren());
+            list.sort((r, l) -> Integer.compare(r.getRank(), l.getRank()));
+            stack.addAll(0, list);
         }
 
         return answer;
@@ -439,8 +451,9 @@ public class Classification implements Named
     {
         visitor.visit(this);
 
-        for (Classification child : new ArrayList<Classification>(children))
-            child.accept(visitor);
+        getChildren().stream() //
+                        .sorted((r, l) -> Integer.compare(r.getRank(), l.getRank()))
+                        .forEach(child -> child.accept(visitor));
 
         for (Assignment assignment : new ArrayList<Assignment>(assignments))
             visitor.visit(this, assignment);

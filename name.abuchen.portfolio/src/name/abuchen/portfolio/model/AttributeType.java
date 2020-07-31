@@ -335,9 +335,28 @@ public class AttributeType
         }
     }
 
+    public static class ImageConverter implements Converter
+    {
+        public static final int MAXIMUM_SIZE_EMBEDDED_IMAGE = 64;
+
+        @Override
+        public String toString(Object object)
+        {
+            return object != null ? (String) object : ""; //$NON-NLS-1$
+        }
+
+        @Override
+        public Object fromString(String value)
+        {
+            return value;
+        }
+
+    }
+
     private final String id;
     private String name;
     private String columnLabel;
+    private String source;
     private Class<? extends Attributable> target;
     private Class<?> type;
 
@@ -376,6 +395,16 @@ public class AttributeType
     public void setColumnLabel(String columnLabel)
     {
         this.columnLabel = columnLabel;
+    }
+
+    public String getSource()
+    {
+        return source;
+    }
+
+    public void setSource(String source)
+    {
+        this.source = source;
     }
 
     public Class<?> getType()

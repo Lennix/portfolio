@@ -5,6 +5,8 @@
 		<string>es</string>
 		<string>nl</string>
 		<string>pt</string>
+		<string>fr</string>
+		<string>it</string>
 	</languages>
 	<artifacts>
 		<artifact>
@@ -38,6 +40,7 @@
 			<filename>messages</filename>
 			<excludes>
 				<string>AboutText</string>
+				<string>AboutTextContributions</string>
 			</excludes>
 		</artifact>
 		<artifact>
@@ -54,6 +57,11 @@
 			<context>ui.charts</context>
 			<path>name.abuchen.portfolio.ui/src/name/abuchen/portfolio/ui/views</path>
 			<filename>labels</filename>
+		</artifact>
+		<artifact>
+			<context>ui.bundle</context>
+			<path>name.abuchen.portfolio.ui/OSGI-INF/l10n</path>
+			<filename>bundle</filename>
 		</artifact>
 		<artifact>
 			<context>ui.bootstrap</context>
@@ -74,6 +82,9 @@
 				<string>.*color</string>
 				<string>.*children</string>
 				<string>.*weight</string>
+				<string>comment</string>
+				<string>source</string>
+				<string>.*data</string>
 			</excludes>
 		</artifact>
 		<artifact>
@@ -85,6 +96,9 @@
 				<string>.*color</string>
 				<string>.*children</string>
 				<string>.*weight</string>
+				<string>comment</string>
+				<string>source</string>
+				<string>.*data</string>
 			</excludes>
 		</artifact>
 		<artifact>
@@ -96,6 +110,9 @@
 				<string>.*color</string>
 				<string>.*children</string>
 				<string>.*weight</string>
+				<string>comment</string>
+				<string>source</string>
+				<string>.*data</string>
 			</excludes>
 		</artifact>
 		<artifact>
@@ -107,6 +124,9 @@
 				<string>.*color</string>
 				<string>.*children</string>
 				<string>.*weight</string>
+				<string>comment</string>
+				<string>source</string>
+				<string>.*data</string>
 			</excludes>
 		</artifact>
 		<artifact>
@@ -119,6 +139,8 @@
 				<string>.*children</string>
 				<string>.*weight</string>
 				<string>comment</string>
+				<string>source</string>
+				<string>.*data</string>
 			</excludes>
 		</artifact>
 	</artifacts>

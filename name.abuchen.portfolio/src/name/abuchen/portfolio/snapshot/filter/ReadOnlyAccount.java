@@ -15,6 +15,7 @@ public class ReadOnlyAccount extends Account
         super(source.getName());
         this.setCurrencyCode(source.getCurrencyCode());
         this.source = Objects.requireNonNull(source);
+        this.setAttributes(source.getAttributes());
     }
 
     public Account unwrap()
@@ -42,5 +43,10 @@ public class ReadOnlyAccount extends Account
     public void shallowDeleteTransaction(AccountTransaction transaction, Client client)
     {
         throw new UnsupportedOperationException();
+    }
+
+    public static Account unwrap(Account account)
+    {
+        return account instanceof ReadOnlyAccount ? unwrap(((ReadOnlyAccount) account).source) : account;
     }
 }

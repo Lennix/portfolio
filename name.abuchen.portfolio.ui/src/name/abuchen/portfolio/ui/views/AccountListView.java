@@ -34,6 +34,7 @@ import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -60,6 +61,7 @@ import name.abuchen.portfolio.ui.handlers.ImportPDFHandler;
 import name.abuchen.portfolio.ui.util.Colors;
 import name.abuchen.portfolio.ui.util.ConfirmAction;
 import name.abuchen.portfolio.ui.util.DropDown;
+import name.abuchen.portfolio.ui.util.LogoManager;
 import name.abuchen.portfolio.ui.util.SimpleAction;
 import name.abuchen.portfolio.ui.util.viewers.Column;
 import name.abuchen.portfolio.ui.util.viewers.ColumnEditingSupport;
@@ -73,6 +75,7 @@ import name.abuchen.portfolio.ui.util.viewers.TransactionTypeEditingSupport;
 import name.abuchen.portfolio.ui.util.viewers.ValueEditingSupport;
 import name.abuchen.portfolio.ui.views.actions.ConvertTransferToDepositRemovalAction;
 import name.abuchen.portfolio.ui.views.columns.AttributeColumn;
+import name.abuchen.portfolio.ui.views.columns.CalculatedQuoteColumn;
 import name.abuchen.portfolio.ui.views.columns.CurrencyColumn;
 import name.abuchen.portfolio.ui.views.columns.CurrencyColumn.CurrencyEditingSupport;
 import name.abuchen.portfolio.ui.views.columns.IsinColumn;
@@ -240,8 +243,8 @@ public class AccountListView extends AbstractListView implements ModificationLis
         accountColumns = new ShowHideColumnHelper(AccountListView.class.getSimpleName() + "@top2", //$NON-NLS-1$
                         getPreferenceStore(), accounts, layout);
 
-        Column column = new NameColumn("0", Messages.ColumnAccount, SWT.None, 150); //$NON-NLS-1$
-        column.setLabelProvider(new NameColumnLabelProvider() // NOSONAR
+        Column column = new NameColumn("0", Messages.ColumnAccount, SWT.None, 150, getClient()); //$NON-NLS-1$
+        column.setLabelProvider(new NameColumnLabelProvider(getClient()) // NOSONAR
         {
             @Override
             public Color getForeground(Object e)
@@ -491,6 +494,13 @@ public class AccountListView extends AbstractListView implements ModificationLis
             {
                 return colorFor((AccountTransaction) element);
             }
+
+            @Override
+            public Image getImage(Object e)
+            {
+                AccountTransaction t = (AccountTransaction) e;
+                return LogoManager.instance().getDefaultColumnImage(t.getSecurity(), getClient().getSettings());
+            }
         });
         column.setSorter(ColumnViewerSorter.create(AccountTransaction.class, "security")); //$NON-NLS-1$
         transactionsColumns.addColumn(column);
@@ -548,37 +558,24 @@ public class AccountListView extends AbstractListView implements ModificationLis
         }.addListener(this).attachTo(column);
         transactionsColumns.addColumn(column);
 
-        column = new Column("6", Messages.ColumnPerShare, SWT.RIGHT, 80); //$NON-NLS-1$
-        column.setDescription(Messages.ColumnPerShare_Description);
-        column.setLabelProvider(new ColumnLabelProvider()
-        {
-            @Override
-            public String getText(Object e)
+        column = new CalculatedQuoteColumn("6", getClient(), e -> { //$NON-NLS-1$
+            AccountTransaction t = (AccountTransaction) e;
+            if (t.getCrossEntry() instanceof BuySellEntry)
             {
-                AccountTransaction t = (AccountTransaction) e;
-                if (t.getCrossEntry() instanceof BuySellEntry)
-                {
-                    PortfolioTransaction pt = ((BuySellEntry) t.getCrossEntry()).getPortfolioTransaction();
-                    return Values.Quote.format(pt.getGrossPricePerShare(), getClient().getBaseCurrency());
-                }
-                else if (t.getType() == Type.DIVIDENDS && t.getShares() != 0)
-                {
-                    long perShare = Math.round(t.getGrossValueAmount() * Values.Share.divider()
-                                    * Values.Quote.factorToMoney() / t.getShares());
-                    return Values.Quote.format(Quote.of(t.getCurrencyCode(), perShare), getClient().getBaseCurrency());
-                }
-                else
-                {
-                    return null;
-                }
+                PortfolioTransaction pt = ((BuySellEntry) t.getCrossEntry()).getPortfolioTransaction();
+                return pt.getGrossPricePerShare();
             }
-
-            @Override
-            public Color getForeground(Object element)
+            else if (t.getType() == Type.DIVIDENDS && t.getShares() != 0)
             {
-                return colorFor((AccountTransaction) element);
+                long perShare = Math.round(t.getGrossValueAmount() * Values.Share.divider()
+                                * Values.Quote.factorToMoney() / t.getShares());
+                return Quote.of(t.getCurrencyCode(), perShare);
             }
-        });
+            else
+            {
+                return null;
+            }
+        }, element -> colorFor((AccountTransaction) element));
         transactionsColumns.addColumn(column);
 
         column = new Column("7", Messages.ColumnOffsetAccount, SWT.None, 120); //$NON-NLS-1$
@@ -595,6 +592,14 @@ public class AccountListView extends AbstractListView implements ModificationLis
             public Color getForeground(Object element)
             {
                 return colorFor((AccountTransaction) element);
+            }
+
+            @Override
+            public Image getImage(Object e)
+            {
+                AccountTransaction t = (AccountTransaction) e;
+                return t.getCrossEntry() != null ? LogoManager.instance().getDefaultColumnImage(
+                                t.getCrossEntry().getCrossOwner(t), getClient().getSettings()) : null;
             }
         });
         new TransactionOwnerListEditingSupport(getClient(), TransactionOwnerListEditingSupport.EditMode.CROSSOWNER)
@@ -621,7 +626,7 @@ public class AccountListView extends AbstractListView implements ModificationLis
 
     private Color colorFor(AccountTransaction t)
     {
-        return t.getType().isDebit() ? Colors.DARK_RED : Colors.DARK_GREEN;
+        return t.getType().isDebit() ? Colors.theme().redForeground() : Colors.theme().greenForeground();
     }
 
     private void hookKeyListener()
@@ -649,7 +654,7 @@ public class AccountListView extends AbstractListView implements ModificationLis
         Account account = (Account) transactions.getData(Account.class.toString());
         if (account == null)
             return;
-        
+
         IStructuredSelection selection = (IStructuredSelection) transactions.getSelection();
         AccountTransaction transaction = (AccountTransaction) selection.getFirstElement();
 
@@ -663,15 +668,15 @@ public class AccountListView extends AbstractListView implements ModificationLis
 
         accountMenu.menuAboutToShow(manager, account, transaction != null ? transaction.getSecurity() : null);
 
-        if(!selection.isEmpty())
+        if (!selection.isEmpty())
         {
             fillTransactionsContextMenuList(manager, selection);
         }
-        
+
         if (transaction != null)
         {
             manager.add(new Separator());
-            
+
             manager.add(new Action(Messages.AccountMenuDeleteTransaction)
             {
                 @Override
@@ -695,7 +700,7 @@ public class AccountListView extends AbstractListView implements ModificationLis
             });
         }
     }
-    
+
     private void fillTransactionsContextMenuList(IMenuManager manager, IStructuredSelection selection)
     {
         // create collection with all selected transactions

@@ -31,6 +31,7 @@ public class BaaderBankPDFExtractor extends AbstractPDFExtractor
         addSellTransaction();
         addDividendTransaction();
         addTaxAdjustmentTransaction();
+        addPreTaxTransaction();
         addFeesAssetManagerTransaction();
         addPeriodenauszugTransactions();
 
@@ -99,10 +100,10 @@ public class BaaderBankPDFExtractor extends AbstractPDFExtractor
     @SuppressWarnings("nls")
     private void addSellTransaction()
     {
-        DocumentType type = new DocumentType("Wertpapierabrechnung: Verkauf");
+        DocumentType type = new DocumentType("Wertpapierabrechnung: Verkauf.*");
         this.addDocumentTyp(type);
 
-        Block block = new Block("Seite 1/2");
+        Block block = new Block("Auftragsdatum.*");
         type.addBlock(block);
         block.set(new Transaction<BuySellEntry>().subject(() -> {
             BuySellEntry entry = new BuySellEntry();
@@ -176,7 +177,7 @@ public class BaaderBankPDFExtractor extends AbstractPDFExtractor
         this.addDocumentTyp(type2);
         this.addDocumentTyp(type3);
 
-        Block block = new Block("Ex-Tag.*");
+        Block block = new Block("^Ex-Tag.*");
         type1.addBlock(block);
         type2.addBlock(block);
         type3.addBlock(block);
@@ -218,7 +219,7 @@ public class BaaderBankPDFExtractor extends AbstractPDFExtractor
                                         Money.of(asCurrencyCode(v.get("currency")), asAmount(v.get("tax"))))))
 
                         .section("tax", "currency").optional()
-                        .match("US-Quellensteuer (?<currency>\\w{3}) (?<tax>[\\d.]+,\\d{2}) -")
+                        .match("(US-Quellensteuer|Quellensteuer) (?<currency>\\w{3}) (?<tax>[\\d.]+,\\d{2}) -")
                         .assign((t, v) -> t.addUnit(new Unit(Unit.Type.TAX,
                                         Money.of(asCurrencyCode(v.get("currency")), asAmount(v.get("tax"))))))
 
@@ -232,7 +233,7 @@ public class BaaderBankPDFExtractor extends AbstractPDFExtractor
         DocumentType type = new DocumentType("Steuerausgleichsrechnung");
         this.addDocumentTyp(type);
 
-        Block block = new Block("Unterschleißheim, (\\d+.\\d+.\\d+)");
+        Block block = new Block("Seite .*");
         type.addBlock(block);
         block.set(new Transaction<AccountTransaction>().subject(() -> {
             AccountTransaction t = new AccountTransaction();
@@ -240,15 +241,57 @@ public class BaaderBankPDFExtractor extends AbstractPDFExtractor
             return t;
         })
 
-                        .section("date")
-                        .match("Unterschleißheim, (?<date>\\d+.\\d+.\\d{4})")
-                        .assign((t, v) -> t.setDateTime(asDate(v.get("date"))))
+                        .oneOf(
 
+                                        section -> section.attributes("date")
+                                                        .match("Unterschleißheim, (?<date>\\d+.\\d+.\\d{4})")
+                                                        .assign((t, v) -> t.setDateTime(asDate(v.get("date"))))
+
+                                        ,
+                                        section -> section.attributes("date")
+                                                        .match("^(?<date>\\d+.\\d+.\\d{4})")
+                                                        .assign((t, v) -> t.setDateTime(asDate(v.get(
+                                                                        "date")))))
+                      
                         .section("amount", "currency")
                         .match("Erstattung *(?<currency>\\w{3}) *(?<amount>[\\d.]+,\\d{2})")
                         .assign((t, v) -> {
                             t.setCurrencyCode(asCurrencyCode(v.get("currency")));
                             t.setAmount(asAmount(v.get("amount")));
+                        })
+
+                        .wrap(t -> new TransactionItem(t)));
+    }
+
+    @SuppressWarnings("nls")
+    private void addPreTaxTransaction()
+    {
+    
+        DocumentType type = new DocumentType("Vorabpauschale");
+        this.addDocumentTyp(type);
+    
+        Block block = new Block("^Ex-Tag.*");
+        type.addBlock(block);
+        block.set(new Transaction<AccountTransaction>().subject(() -> {
+            AccountTransaction t = new AccountTransaction();
+            t.setType(AccountTransaction.Type.TAXES);
+            return t;
+        })
+    
+                        .section("isin", "wkn", "name", "shares") //
+                        .match("^Nominale *ISIN: *(?<isin>[^ ]*) *WKN: *(?<wkn>[^ ]*)$") //
+                        .match("^STK (?<shares>[\\.\\d]+[,\\d]*) (?<name>.*)") //
+                        .assign((t, v) -> {
+                            t.setSecurity(getOrCreateSecurity(v));
+                            t.setShares(asShares(v.get("shares")));
+                        })
+
+                        .section("amount", "currency", "date")
+                        .match("Zu Lasten Konto \\d+ Valuta: (?<date>\\d+\\.\\d+\\.\\d{4}) *(?<currency>\\w{3}) *(?<amount>[\\d.]+,\\d{2})")
+                        .assign((t, v) -> {
+                            t.setCurrencyCode(asCurrencyCode(v.get("currency")));
+                            t.setAmount(asAmount(v.get("amount")));
+                            t.setDateTime(asDate(v.get("date")));
                         })
 
                         .wrap(t -> new TransactionItem(t)));
@@ -287,8 +330,8 @@ public class BaaderBankPDFExtractor extends AbstractPDFExtractor
     @SuppressWarnings("nls")
     private void addPeriodenauszugTransactions()
     {
-        final DocumentType type = new DocumentType("Perioden-Kontoauszug", (context, lines) -> {
-            Pattern pCurrency = Pattern.compile("Perioden-Kontoauszug:[ ]+(\\w{3}+)-Konto");
+        final DocumentType type = new DocumentType("(Perioden-Kontoauszug|Tageskontoauszug)", (context, lines) -> {
+            Pattern pCurrency = Pattern.compile("(Perioden-Kontoauszug|Tageskontoauszug):[ ]+(\\w{3})-Konto");
             // read the current context here
             for (String line : lines)
             {
@@ -304,7 +347,7 @@ public class BaaderBankPDFExtractor extends AbstractPDFExtractor
         // deposit, add value to account
         // 01.01.2020 Lastschrift aktiv 01.01.2020 123,45
         Block depositBlock = new Block(
-                        "(\\d+\\.\\d+\\.\\d{4}) (Lastschrift aktiv) (\\d+\\.\\d+\\.\\d{4}) ([\\d.]+,\\d{2})");
+                        "(\\d+\\.\\d+\\.\\d{4}) (Lastschrift aktiv|Gutschrift) (\\d+\\.\\d+\\.\\d{4}) ([\\d.]+,\\d{2})");
         type.addBlock(depositBlock);
         depositBlock.set(new Transaction<AccountTransaction>().subject(() -> {
             AccountTransaction t = new AccountTransaction();
@@ -313,7 +356,7 @@ public class BaaderBankPDFExtractor extends AbstractPDFExtractor
         })
 
                         .section("valuta", "amount")
-                        .match("(\\d+\\.\\d+\\.\\d{4}) (Lastschrift aktiv) (?<valuta>\\d+\\.\\d+\\.\\d{4}) (?<amount>[\\d.]+,\\d{2})")
+                        .match("(\\d+\\.\\d+\\.\\d{4}) (Lastschrift aktiv|Gutschrift) (?<valuta>\\d+\\.\\d+\\.\\d{4}) (?<amount>[\\d.]+,\\d{2})")
                         .assign((t, v) -> {
                             Map<String, String> context = type.getCurrentContext();
                             t.setCurrencyCode(asCurrencyCode(context.get("currency")));
@@ -377,7 +420,7 @@ public class BaaderBankPDFExtractor extends AbstractPDFExtractor
                         })
 
                         .section("amount", "date", "shares")
-                        .match("(\\d+.\\d+.\\d{4}+) (Kauf) (?<date>\\d+.\\d+.\\d{4}+) (?<amount>[\\d.,]+).*")
+                        .match("(?<date>\\d+.\\d+.\\d{4}+) (Kauf) (\\d+.\\d+.\\d{4}+) (?<amount>[\\d.,]+).*")
                         .match("^(.*)$").match("^ISIN .{12}").match("^STK *(?<shares>[\\d.,]+).*").assign((t, v) -> {
                             Map<String, String> context = type.getCurrentContext();
                             t.setDate(asDate(v.get("date")));
@@ -402,7 +445,7 @@ public class BaaderBankPDFExtractor extends AbstractPDFExtractor
                         })
 
                         .section("amount", "date", "shares")
-                        .match("(\\d+.\\d+.\\d{4}+) (Verkauf) (?<date>\\d+.\\d+.\\d{4}+) (?<amount>[\\d.,]+).*")
+                        .match("(?<date>\\d+.\\d+.\\d{4}+) (Verkauf) (\\d+.\\d+.\\d{4}+) (?<amount>[\\d.,]+).*")
                         .match("^(.*)$").match("^ISIN .{12}").match("^STK *(?<shares>[\\d.,]+).*").assign((t, v) -> {
                             Map<String, String> context = type.getCurrentContext();
                             t.setDate(asDate(v.get("date")));

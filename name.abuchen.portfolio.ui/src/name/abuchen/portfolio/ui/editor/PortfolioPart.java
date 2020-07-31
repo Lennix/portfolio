@@ -17,6 +17,7 @@ import javax.inject.Named;
 import org.eclipse.e4.core.contexts.ContextInjectionFactory;
 import org.eclipse.e4.core.contexts.EclipseContextFactory;
 import org.eclipse.e4.core.contexts.IEclipseContext;
+import org.eclipse.e4.core.di.extensions.Preference;
 import org.eclipse.e4.core.services.events.IEventBroker;
 import org.eclipse.e4.ui.di.Focus;
 import org.eclipse.e4.ui.di.Persist;
@@ -52,7 +53,6 @@ import name.abuchen.portfolio.ui.Messages;
 import name.abuchen.portfolio.ui.PortfolioPlugin;
 import name.abuchen.portfolio.ui.UIConstants;
 import name.abuchen.portfolio.ui.editor.Navigation.Item;
-import name.abuchen.portfolio.ui.util.Colors;
 import name.abuchen.portfolio.ui.util.SimpleAction;
 import name.abuchen.portfolio.ui.util.swt.SashLayout;
 import name.abuchen.portfolio.ui.util.swt.SashLayoutData;
@@ -145,6 +145,7 @@ public class PortfolioPart implements ClientInputListener
         sash.setLayout(sashLayout);
 
         Composite navigationBar = new Composite(sash, SWT.NONE);
+        navigationBar.setData(UIConstants.CSS.CLASS_NAME, "sidebar"); //$NON-NLS-1$
         GridLayoutFactory.fillDefaults().numColumns(2).spacing(0, 0).margins(0, 0).applyTo(navigationBar);
 
         this.sidebar = new ClientEditorSidebar(this);
@@ -155,7 +156,7 @@ public class PortfolioPart implements ClientInputListener
                         menuManager -> addToNavigationMenu(menuManager, 0, clientInput.getNavigation().getRoots()));
 
         Composite divider = new Composite(navigationBar, SWT.NONE);
-        divider.setBackground(Colors.SIDEBAR_BORDER);
+        divider.setData(UIConstants.CSS.CLASS_NAME, "sidebarBorder"); //$NON-NLS-1$
         GridDataFactory.fillDefaults().span(0, 2).hint(1, SWT.DEFAULT).applyTo(divider);
 
         ClientProgressProvider provider = make(ClientProgressProvider.class, clientInput.getClient(), navigationBar);
@@ -271,7 +272,8 @@ public class PortfolioPart implements ClientInputListener
 
         Label label = new Label(container, SWT.CENTER | SWT.WRAP);
         label.setBackground(container.getBackground());
-        label.setText(message);
+        if (message != null)
+            label.setText(message);
 
         data = new FormData();
         data.top = new FormAttachment(image, 40);
@@ -370,6 +372,12 @@ public class PortfolioPart implements ClientInputListener
     {
         if (view != null && view.getControl() != null && !view.getControl().isDisposed())
             view.notifyModelUpdated();
+    }
+
+    @Inject
+    public void setQuotePrecision(@Preference(value = UIConstants.Preferences.FORMAT_CALCULATED_QUOTE_DIGITS) int quotePrecision)
+    {
+        onRecalculationNeeded();
     }
 
     @Focus

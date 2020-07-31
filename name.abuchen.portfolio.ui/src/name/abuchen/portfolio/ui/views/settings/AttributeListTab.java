@@ -140,8 +140,8 @@ public class AttributeListTab implements AbstractTabbedView.Tab, ModificationLis
 
         ColumnEditingSupport.prepare(tableViewer);
 
-        ShowHideColumnHelper support = new ShowHideColumnHelper(AttributeListTab.class.getSimpleName(), preferences,
-                        tableViewer, layout);
+        ShowHideColumnHelper support = new ShowHideColumnHelper(AttributeListTab.class.getSimpleName() + "@v2", //$NON-NLS-1$
+                        preferences, tableViewer, layout);
 
         addColumns(support);
 
@@ -201,6 +201,18 @@ public class AttributeListTab implements AbstractTabbedView.Tab, ModificationLis
             }
         });
         support.addColumn(column);
+
+        column = new Column(Messages.ColumnSource, SWT.None, 100);
+        column.setLabelProvider(new ColumnLabelProvider()
+        {
+            @Override
+            public String getText(Object element)
+            {
+                return ((AttributeType) element).getSource();
+            }
+        });
+        support.addColumn(column);
+
     }
 
     private void fillContextMenu(IMenuManager manager)
@@ -232,12 +244,7 @@ public class AttributeListTab implements AbstractTabbedView.Tab, ModificationLis
                     AttributeType above = (AttributeType) tableViewer.getTable().getItem(index - 1).getData();
                     int insertAt = client.getSettings().getAttributeTypeIndexOf(above);
 
-                    ClientSettings settings = client.getSettings();
-                    settings.removeAttributeType(attributeType);
-                    settings.addAttributeType(insertAt, attributeType);
-                    tableViewer.setInput(client.getSettings().getAttributeTypes()
-                                    .filter(t -> t.getTarget() == mode.getType()).toArray());
-                    client.touch();
+                    moveAttribute(attributeType, insertAt);
                 }
             });
         }
@@ -249,18 +256,23 @@ public class AttributeListTab implements AbstractTabbedView.Tab, ModificationLis
                 @Override
                 public void run()
                 {
-                    AttributeType below = (AttributeType) tableViewer.getTable().getItem(index - 1).getData();
+                    AttributeType below = (AttributeType) tableViewer.getTable().getItem(index + 1).getData();
                     int insertAt = client.getSettings().getAttributeTypeIndexOf(below);
 
-                    ClientSettings settings = client.getSettings();
-                    settings.removeAttributeType(attributeType);
-                    settings.addAttributeType(insertAt, attributeType);
-                    tableViewer.setInput(client.getSettings().getAttributeTypes()
-                                    .filter(t -> t.getTarget() == mode.getType()).toArray());
-                    client.touch();
+                    moveAttribute(attributeType, insertAt);
                 }
             });
         }
+    }
+
+    private void moveAttribute(AttributeType attributeType, int insertAt)
+    {
+        ClientSettings settings = client.getSettings();
+        settings.removeAttributeType(attributeType);
+        settings.addAttributeType(insertAt, attributeType);
+        tableViewer.setInput(client.getSettings().getAttributeTypes().filter(t -> t.getTarget() == mode.getType())
+                        .toArray());
+        client.touch();
     }
 
     private void addDeleteActions(IMenuManager manager, IStructuredSelection selection)

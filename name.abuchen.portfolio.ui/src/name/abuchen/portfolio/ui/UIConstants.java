@@ -94,6 +94,16 @@ public interface UIConstants
         String PROXY_PORT = "PROXY_PORT"; //$NON-NLS-1$
 
         /**
+         * Preference key for display precision of share amounts
+         */
+        String FORMAT_SHARES_DIGITS = "FORMAT_SHARES_DIGITS"; //$NON-NLS-1$
+
+        /*
+         * Preference key for display precision of quote values
+         */
+        String FORMAT_CALCULATED_QUOTE_DIGITS = "FORMAT_CALCULATED_QUOTE_DIGITS"; //$NON-NLS-1$
+
+        /**
          * Preference key to use indirect quotation ("Mengennotierung") when
          * displaying exchange rates.
          */
@@ -121,8 +131,7 @@ public interface UIConstants
          * data file.
          */
         String AUTO_SAVE_FILE = "AUTO_SAVE_FILE"; //$NON-NLS-1$
-        
-        
+
         /**
          * Preference key whether to store settings (column width, last expanded
          * tree nodes, etc.) next to the data file as opposed to in the
@@ -137,9 +146,16 @@ public interface UIConstants
 
         String FINNHUB_API_KEY = "FINNHUB_API_KEY"; //$NON-NLS-1$
 
+        String DIVVYDIARY_API_KEY = "DIVVYDIARY_API_KEY"; //$NON-NLS-1$
+
         /**
          * Preference key whether to store settings (standard calendar)
          */
         String CALENDAR = "CALENDAR"; //$NON-NLS-1$
+    }
+
+    interface CSS // NOSONAR
+    {
+        String CLASS_NAME = "org.eclipse.e4.ui.css.CssClassName"; //$NON-NLS-1$
     }
 }

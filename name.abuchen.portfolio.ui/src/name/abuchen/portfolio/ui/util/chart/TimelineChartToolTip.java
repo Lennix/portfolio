@@ -7,8 +7,10 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -22,7 +24,6 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.swtchart.Chart;
@@ -33,9 +34,8 @@ import org.swtchart.ISeries;
 
 import name.abuchen.portfolio.money.Values;
 import name.abuchen.portfolio.ui.Messages;
-import name.abuchen.portfolio.ui.util.Colors;
+import name.abuchen.portfolio.ui.util.swt.ColoredLabel;
 import name.abuchen.portfolio.util.Pair;
-import name.abuchen.portfolio.util.TextUtil;
 
 public class TimelineChartToolTip extends AbstractChartToolTip
 {
@@ -43,7 +43,8 @@ public class TimelineChartToolTip extends AbstractChartToolTip
 
     private Function<Object, String> xAxisFormat;
 
-    private DecimalFormat valueFormat = new DecimalFormat("#,##0.00"); //$NON-NLS-1$
+    private DecimalFormat defaultValueFormat = new DecimalFormat("#,##0.00"); //$NON-NLS-1$
+    private Map<String, DecimalFormat> overrideValueFormat = new HashMap<>();
 
     private boolean categoryEnabled = false;
     private boolean reverseLabels = false;
@@ -80,9 +81,14 @@ public class TimelineChartToolTip extends AbstractChartToolTip
         this.xAxisFormat = format;
     }
 
-    public void setValueFormat(DecimalFormat valueFormat)
+    public void setDefaultValueFormat(DecimalFormat defaultValueFormat)
     {
-        this.valueFormat = valueFormat;
+        this.defaultValueFormat = defaultValueFormat;
+    }
+
+    public void overrideValueFormat(String series, DecimalFormat valueFormat)
+    {
+        this.overrideValueFormat.put(series, valueFormat);
     }
 
     /**
@@ -176,25 +182,17 @@ public class TimelineChartToolTip extends AbstractChartToolTip
     protected void createComposite(Composite parent)
     {
         final Composite container = new Composite(parent, SWT.NONE);
-        container.setBackgroundMode(SWT.INHERIT_FORCE);
         RowLayout layout = new RowLayout(SWT.VERTICAL);
         layout.center = true;
         container.setLayout(layout);
-
-        Color foregroundColor = Display.getDefault().getSystemColor(SWT.COLOR_BLACK);
-        container.setForeground(foregroundColor);
-        container.setBackground(Colors.INFO_TOOLTIP_BACKGROUND);
 
         Composite data = new Composite(container, SWT.NONE);
         GridLayoutFactory.swtDefaults().numColumns(2).applyTo(data);
 
         Label left = new Label(data, SWT.NONE);
-        left.setForeground(foregroundColor);
-        left.setText(TextUtil.pad(categoryEnabled ? getChart().getAxisSet().getXAxis(0).getTitle().getText()
-                        : Messages.ColumnDate));
+        left.setText(categoryEnabled ? getChart().getAxisSet().getXAxis(0).getTitle().getText() : Messages.ColumnDate);
 
         Label right = new Label(data, SWT.NONE);
-        right.setForeground(foregroundColor);
         right.setText(formatXAxisData(getFocusedObject()));
 
         List<Pair<ISeries, Double>> values = computeValues(getChart().getSeriesSet().getSeries());
@@ -212,14 +210,13 @@ public class TimelineChartToolTip extends AbstractChartToolTip
             Color color = series instanceof ILineSeries ? ((ILineSeries) series).getLineColor()
                             : ((IBarSeries) series).getBarColor();
 
-            left = new Label(data, SWT.NONE);
-            left.setBackground(color);
-            left.setForeground(Colors.getTextColor(color));
-            left.setText(TextUtil.pad(TextUtil.tooltip(series.getId())));
-            GridDataFactory.fillDefaults().grab(true, false).applyTo(left);
+            ColoredLabel cl = new ColoredLabel(data, SWT.NONE);
+            cl.setBackdropColor(color);
+            cl.setText(series.getId());
+            GridDataFactory.fillDefaults().grab(true, false).applyTo(cl);
 
             right = new Label(data, SWT.RIGHT);
-            right.setForeground(foregroundColor);
+            DecimalFormat valueFormat = overrideValueFormat.getOrDefault(series.getId(), defaultValueFormat);
             right.setText(valueFormat.format(value.getRight()));
             GridDataFactory.fillDefaults().align(SWT.END, SWT.FILL).applyTo(right);
         }
@@ -228,7 +225,6 @@ public class TimelineChartToolTip extends AbstractChartToolTip
         extraInfoProvider.forEach(provider -> provider.accept(container, focus));
 
         Label hint = new Label(data, SWT.NONE);
-        hint.setForeground(Colors.DARK_GRAY);
         hint.setText(Messages.TooltipHintPressAlt);
         hint.setFont(this.resourceManager.createFont(
                         FontDescriptor.createFrom(data.getFont()).increaseHeight(-3).withStyle(SWT.ITALIC)));
