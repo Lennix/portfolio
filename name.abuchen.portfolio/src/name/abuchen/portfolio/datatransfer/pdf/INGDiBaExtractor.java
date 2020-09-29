@@ -77,18 +77,13 @@ public class INGDiBaExtractor extends AbstractPDFExtractor
                             return entry;
                         })
 
-                        .section("wkn", "isin", "name", "nameContinued")
-                        //
+                        .section("wkn", "isin", "name", "name1") //
                         .match("^ISIN \\(WKN\\) (?<isin>[^ ]*) \\((?<wkn>.*)\\)$")
                         .match("Wertpapierbezeichnung (?<name>.*)")
-                        .match("(?<nameContinued>.*?)")
+                        .match("(?<name1>.*)")
                         .assign((t, v) -> {
-                            String nameRowTwo = v.get("nameContinued"); //$NON-NLS-1$
-                            if (nameRowTwo != null && (nameRowTwo.contains("Fälligkeit") || nameRowTwo.contains("Nominale")))
-                            {
-                                v.put("nameContinued", "");
-                            }
-                            
+                            if (!v.get("name1").startsWith("Nominale"))
+                                v.put("name", v.get("name") + " " + v.get("name1"));
                             t.setSecurity(getOrCreateSecurity(v));
                         })
 
@@ -161,16 +156,19 @@ public class INGDiBaExtractor extends AbstractPDFExtractor
                             entry.setType(PortfolioTransaction.Type.SELL);
                             return entry;
                         })
-
-                        .section("wkn", "isin", "name")
-                        //
+                        .section("wkn", "isin", "name", "name1") //
                         .match("^ISIN \\(WKN\\) (?<isin>[^ ]*) \\((?<wkn>.*)\\)$")
                         .match("Wertpapierbezeichnung (?<name>.*)")
-                        .assign((t, v) -> t.setSecurity(getOrCreateSecurity(v)))
+                        .match("(?<name1>.*)")
+                        .assign((t, v) -> {
+                            if (!v.get("name1").startsWith("Nominale"))
+                                v.put("name", v.get("name") + " " + v.get("name1"));
+                            t.setSecurity(getOrCreateSecurity(v));
+                        })
 
                         .section("shares")
                         //
-                        .match("^Nominale( St.ck)? (?<shares>[\\d.]+(,\\d+)?).*")
+                        .match("^Nominale St.ck (?<shares>[\\d.]+(,\\d+)?)")
                         .assign((t, v) -> t.setShares(asShares(v.get("shares"))))
 
                         .section("date") //
@@ -182,7 +180,7 @@ public class INGDiBaExtractor extends AbstractPDFExtractor
                         .assign((t, v) -> t.setDate(asDate(v.get("date"), v.get("time"))))
 
                         .section("amount", "currency") //
-                        .match("Endbetrag zu Ihren (Gunsten|Lasten) (?<currency>\\w{3}+) (?<amount>[\\d.]+,\\d+)") //
+                        .match("Endbetrag zu Ihren Gunsten (?<currency>\\w{3}+) (?<amount>[\\d.]+,\\d+)") //
                         .assign((t, v) -> {
                             t.setCurrencyCode(asCurrencyCode(v.get("currency")));
                             t.setAmount(asAmount(v.get("amount")));
