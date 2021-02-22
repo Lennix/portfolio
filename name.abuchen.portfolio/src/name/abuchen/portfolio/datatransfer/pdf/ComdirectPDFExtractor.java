@@ -32,8 +32,7 @@ public class ComdirectPDFExtractor extends AbstractPDFExtractor
     {
         super(client);
 
-        addBankIdentifier("comdirect bank"); //$NON-NLS-1$
-        addBankIdentifier("Ihre comdirect"); //$NON-NLS-1$
+        addBankIdentifier("comdirect"); //$NON-NLS-1$
 
         addBuyTransaction();
         addDividendTransaction();
