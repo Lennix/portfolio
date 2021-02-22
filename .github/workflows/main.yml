@@ -35,7 +35,7 @@ jobs:
         --file portfolio-app/pom.xml
     - name: Package artifacts
       run: |
-        mkdir staging && cp target/*.jar staging
+        mkdir staging && cp -R portfolio-product/target/* staging
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
       with:
