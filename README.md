@@ -1,6 +1,6 @@
 # About
 
-A simple tool to calculate the overall performance of an investment portfolio.
+A simple tool to calculate the overall performance of an investment portfolio. (This fork just added BTC, ETH and XMR as currencies)
 
 See https://www.portfolio-performance.info for more details.
 
