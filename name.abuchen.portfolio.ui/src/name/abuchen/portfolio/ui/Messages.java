@@ -665,6 +665,9 @@ public class Messages extends NLS
     public static String LabelHeading;
     public static String LabelHeatmap;
     public static String LabelHeatmapEarnings;
+    public static String LabelHeatmapInvestments;
+    public static String LabelHeatmapInvestmentsDirect;
+    public static String LabelHeatmapInvestmentsNoSellings;
     public static String LabelHeatmapOrnament;
     public static String LabelHistoricalReturnsAndVolatiltity;
     public static String LabelJSONPathHint;
@@ -776,6 +779,7 @@ public class Messages extends NLS
     public static String MenuExportChartData;
     public static String MenuExportData;
     public static String MenuExportDiagram;
+    public static String MenuHideInformationPane;
     public static String MenuHideSidebar;
     public static String MenuLabelSetAsStartPage;
     public static String MenuNewDashboard;
@@ -799,6 +803,7 @@ public class Messages extends NLS
     public static String MenuSettingsNew;
     public static String MenuShow;
     public static String MenuShowHideColumns;
+    public static String MenuShowInformationPane;
     public static String MenuShowSidebar;
     public static String MenuSwitchCurrencies;
     public static String MenuTaxonomyAssignmentRemove;
@@ -934,6 +939,7 @@ public class Messages extends NLS
     public static String PrefDescriptionQuandl;
     public static String PrefDivvyDiaryAPIKey;
     public static String PrefFinnhubAPIKey;
+    public static String PrefLabelEnableExperimentalFeatures;
     public static String PrefLabelNote;
     public static String PrefLabelProxyHost;
     public static String PrefLabelProxyPort;
@@ -978,10 +984,11 @@ public class Messages extends NLS
     public static String SecurityMenuDebugGetHistoricalQuotes;
     public static String SecurityMenuDeleteAllPrices;
     public static String SecurityMenuDeleteLatestQuote;
-    public static String SecurityMenuDeletePrice;
-    public static String SecurityMenuDeleteSecurity;
-    public static String SecurityMenuDeleteSingleSecurityConfirm;
+    public static String SecurityMenuDeleteMultipleSecurity;
     public static String SecurityMenuDeleteMultipleSecurityConfirm;
+    public static String SecurityMenuDeletePrice;
+    public static String SecurityMenuDeleteSingleSecurity;
+    public static String SecurityMenuDeleteSingleSecurityConfirm;
     public static String SecurityMenuDividends;
     public static String SecurityMenuEditSecurity;
     public static String SecurityMenuErrorMessageRoundingMustBeBetween0AndX;
@@ -996,6 +1003,14 @@ public class Messages extends NLS
     public static String SecurityMenuRoundToXDecimalPlaces;
     public static String SecurityMenuSearch4Securities;
     public static String SecurityMenuSell;
+    public static String SecurityMenuSetMultipleSecurityActive;
+    public static String SecurityMenuSetMultipleSecurityActiveConfirm;
+    public static String SecurityMenuSetMultipleSecurityInactive;
+    public static String SecurityMenuSetMultipleSecurityInactiveConfirm;
+    public static String SecurityMenuSetSingleSecurityActive;
+    public static String SecurityMenuSetSingleSecurityActiveConfirm;
+    public static String SecurityMenuSetSingleSecurityInactive;
+    public static String SecurityMenuSetSingleSecurityInactiveConfirm;
     public static String SecurityMenuStockSplit;
     public static String SecurityMenuAddEvent;
     public static String SecurityMenuLabelNumberOfDecimalPlaces;
@@ -1080,9 +1095,6 @@ public class Messages extends NLS
     public static String HoldingsWarningAssetsWithNegativeValuation;
     public static String HoldingsWarningAssetsWithNegativeValuationDetails;
     public static String YearlyPerformanceHeatmapToolTip;
-    public static String SecurityMenuSetSecurityInactive;
-    public static String SecurityMenuSetMultipleSecurityInactiveConfirm;
-    public static String SecurityMenuSetSingleSecurityInactiveConfirm;
     static
     {
         // initialize resource bundle
